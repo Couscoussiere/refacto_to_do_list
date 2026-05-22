@@ -1,0 +1,78 @@
+version: 2
+
+updates:
+  # ─── Dépendances racine ──────────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+    labels:
+      - dependencies
+
+  # ─── Auth service ────────────────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /auth-service
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+    labels:
+      - dependencies
+      - auth-service
+
+  # ─── Project service ─────────────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /project-service
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+    labels:
+      - dependencies
+      - project-service
+
+  # ─── Task service ────────────────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /task-service
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+    labels:
+      - dependencies
+      - task-service
+
+  # ─── Notification service ────────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /notification-service
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+    labels:
+      - dependencies
+      - notification-service
+
+  # ─── Frontend ────────────────────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+    labels:
+      - dependencies
+      - frontend
+
+  # ─── GitHub Actions ──────────────────────────────────────────────────────────
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+    labels:
+      - dependencies
+      - github-actions
