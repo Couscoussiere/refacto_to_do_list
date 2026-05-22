@@ -18,6 +18,7 @@ jobs:
       task: ${{ steps.filter.outputs.task }}
       notification: ${{ steps.filter.outputs.notification }}
       root: ${{ steps.filter.outputs.root }}
+      dockerfile: ${{ steps.filter.outputs.dockerfile }}
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +38,8 @@ jobs:
               - 'package.json'
               - 'eslint.config.mjs'
               - '.dependency-cruiser.cjs'
+            dockerfile:
+              - '**/Dockerfile'
 
   # ─── Tests par service (uniquement si modifié) ───────────────────────────────
 
@@ -143,6 +146,28 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run lint:architecture
+
+  # ─── Lint Dockerfiles ────────────────────────────────────────────────────────
+
+  hadolint:
+    name: Hadolint ${{ matrix.service }}
+    needs: changes
+    if: needs.changes.outputs.dockerfile == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - project-service
+          - task-service
+          - notification-service
+          - frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf  # v3.1.0
+        with:
+          dockerfile: ${{ matrix.service }}/Dockerfile
 
   # ─── Sécurité des dépendances ────────────────────────────────────────────────
 
