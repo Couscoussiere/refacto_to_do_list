@@ -10,6 +10,9 @@ updates:
       time: '09:00'
     labels:
       - dependencies
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
 
   # ─── Auth service ────────────────────────────────────────────────────────────
   - package-ecosystem: npm
@@ -21,6 +24,9 @@ updates:
     labels:
       - dependencies
       - auth-service
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
 
   # ─── Project service ─────────────────────────────────────────────────────────
   - package-ecosystem: npm
@@ -32,6 +38,9 @@ updates:
     labels:
       - dependencies
       - project-service
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
 
   # ─── Task service ────────────────────────────────────────────────────────────
   - package-ecosystem: npm
@@ -43,6 +52,9 @@ updates:
     labels:
       - dependencies
       - task-service
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
 
   # ─── Notification service ────────────────────────────────────────────────────
   - package-ecosystem: npm
@@ -54,6 +66,9 @@ updates:
     labels:
       - dependencies
       - notification-service
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
 
   # ─── Frontend ────────────────────────────────────────────────────────────────
   - package-ecosystem: npm
@@ -65,6 +80,9 @@ updates:
     labels:
       - dependencies
       - frontend
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
 
   # ─── GitHub Actions ──────────────────────────────────────────────────────────
   - package-ecosystem: github-actions
@@ -76,3 +94,6 @@ updates:
     labels:
       - dependencies
       - github-actions
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
