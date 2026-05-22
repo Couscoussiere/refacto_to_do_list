@@ -11,6 +11,7 @@ node_modules/
 .env
 .env.*
 !.env.test
+!.env.example
 
 # Local sqlite db (tests/dev)
 .tmp/

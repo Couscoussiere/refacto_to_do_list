@@ -34,10 +34,10 @@ services:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
     environment:
-      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=authdb
       - MYSQL_USER=auth_user
-      - MYSQL_PASSWORD=root
+      - MYSQL_PASSWORD=${MYSQL_AUTH_PASSWORD}
     ports:
       - "3307:3306"
     volumes:
@@ -48,10 +48,10 @@ services:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
     environment:
-      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=projectdb
       - MYSQL_USER=project_user
-      - MYSQL_PASSWORD=root
+      - MYSQL_PASSWORD=${MYSQL_PROJECT_PASSWORD}
     ports:
       - "3308:3306"
     volumes:
@@ -62,10 +62,10 @@ services:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
     environment:
-      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=taskdb
       - MYSQL_USER=task_user
-      - MYSQL_PASSWORD=root
+      - MYSQL_PASSWORD=${MYSQL_TASK_PASSWORD}
     ports:
       - "3309:3306"
     volumes:
@@ -79,11 +79,11 @@ services:
       - "3000:3000"
     environment:
       - PORT=3000
-      - JWT_SECRET=5508b0990abb17908b988d35784e9a580dc9133c1e52171e70866f5e570f3932
+      - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=1h
       - DB_HOST=mysql-auth
       - DB_USER=auth_user
-      - DB_PASSWORD=root
+      - DB_PASSWORD=${MYSQL_AUTH_PASSWORD}
       - DB_NAME=authdb
     depends_on:
       rabbitmq:
@@ -103,7 +103,7 @@ services:
       - RABBITMQ_URL=amqp://rabbitmq:5672
       - DB_HOST=mysql-project
       - DB_USER=project_user
-      - DB_PASSWORD=root
+      - DB_PASSWORD=${MYSQL_PROJECT_PASSWORD}
       - DB_NAME=projectdb
     depends_on:
       rabbitmq:
@@ -124,7 +124,7 @@ services:
       - RABBITMQ_URL=amqp://rabbitmq:5672
       - DB_HOST=mysql-task
       - DB_USER=task_user
-      - DB_PASSWORD=root
+      - DB_PASSWORD=${MYSQL_TASK_PASSWORD}
       - DB_NAME=taskdb
     depends_on:
       rabbitmq:

@@ -1,0 +1,12 @@
+[allowlist]
+  description = "Faux positifs connus : credentials de test uniquement"
+  paths = [
+    '''vitest\.config\.ts''',
+    '''\.test\.ts$''',
+    '''\.spec\.(ts|js)$''',
+    '''\.env\.test$''',
+  ]
+  regexes = [
+    '''test-secret''',
+    '''test-secret-key''',
+  ]
