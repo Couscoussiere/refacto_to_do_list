@@ -1,0 +1,132 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  # ─── Vérification des modifications récentes ─────────────────────────────────
+
+  check-changes:
+    name: Vérification des commits récents
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Vérifier les commits des dernières 24h
+        id: check
+        run: |
+          COMMITS=$(git log --since="24 hours ago" --oneline | wc -l)
+          echo "Commits trouvés : $COMMITS"
+          if [ "$COMMITS" -gt 0 ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "Aucune modification aujourd'hui, pipeline ignoré."
+          fi
+
+  # ─── Tests E2E ───────────────────────────────────────────────────────────────
+
+  e2e:
+    name: Tests E2E Playwright
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Démarrage de la stack Docker Compose
+        run: docker compose up -d --build
+
+      - name: Attente que les services soient prêts
+        run: |
+          echo "Attente des services..."
+          sleep 30
+          docker compose ps
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Installation des navigateurs Playwright
+        run: npx playwright install --with-deps
+
+      - name: Exécution des tests E2E
+        run: npm run test:e2e
+
+      - name: Upload rapport Playwright
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Arrêt de la stack
+        if: always()
+        run: docker compose down
+
+  # ─── Analyse de sécurité des images Docker ───────────────────────────────────
+
+  trivy:
+    name: Scan Trivy ${{ matrix.service }}
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - project-service
+          - task-service
+          - notification-service
+          - frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image ${{ matrix.service }}
+        run: docker build -t ${{ matrix.service }}:scan ./${{ matrix.service }}
+
+      - name: Scan Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ matrix.service }}:scan
+          format: sarif
+          output: trivy-${{ matrix.service }}.sarif
+          severity: HIGH,CRITICAL
+
+      - name: Upload résultats dans GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.service }}.sarif
+          category: trivy-${{ matrix.service }}
+
+  # ─── Analyse statique CodeQL ─────────────────────────────────────────────────
+
+  codeql:
+    name: Analyse CodeQL
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialisation CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Analyse CodeQL
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: codeql
