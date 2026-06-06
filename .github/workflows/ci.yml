@@ -61,6 +61,7 @@ jobs:
           cache-dependency-path: auth-service/package-lock.json
 
       - run: npm ci
+      - run: npm run build
       - run: npm test
 
   test-project:
@@ -81,6 +82,7 @@ jobs:
           cache-dependency-path: project-service/package-lock.json
 
       - run: npm ci
+      - run: npm run build
       - run: npm test
 
   test-task:
@@ -101,6 +103,7 @@ jobs:
           cache-dependency-path: task-service/package-lock.json
 
       - run: npm ci
+      - run: npm run build
       - run: npm test
 
   test-notification:
@@ -121,6 +124,7 @@ jobs:
           cache-dependency-path: notification-service/package-lock.json
 
       - run: npm ci
+      - run: npm run build
       - run: npm test
 
   # ─── Qualité du code (si fichiers racine ou n'importe quel service modifié) ──
