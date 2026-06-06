@@ -172,17 +172,34 @@ jobs:
   # ─── Sécurité des dépendances ────────────────────────────────────────────────
 
   audit:
-    name: Audit sécurité
-    needs: changes
-    if: needs.changes.outputs.root == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  name: Audit sécurité ${{ matrix.service }}
+  needs: changes
+  if: |
+    needs.changes.outputs.auth == 'true' ||
+    needs.changes.outputs.project == 'true' ||
+    needs.changes.outputs.task == 'true' ||
+    needs.changes.outputs.notification == 'true'
+  runs-on: ubuntu-latest
+  strategy:
+    matrix:
+      service:
+        - auth-service
+        - project-service
+        - task-service
+        - notification-service
+  steps:
+    - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: npm
+        cache-dependency-path: ${{ matrix.service }}/package-lock.json
 
-      - run: npm ci
-      - run: npm audit --audit-level=high
+    - name: Install dependencies
+      working-directory: ${{ matrix.service }}
+      run: npm ci
+
+    - name: Run npm audit
+      working-directory: ${{ matrix.service }}
+      run: npm audit --audit-level=high
