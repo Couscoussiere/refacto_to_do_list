@@ -79,7 +79,7 @@ services:
       - "3000:3000"
     environment:
       - PORT=3000
-      - JWT_SECRET=5508b0990abb17908b988d35784e9a580dc9133c1e52171e70866f5e570f3932
+      - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=1h
       - DB_HOST=mysql-auth
       - DB_USER=auth_user
