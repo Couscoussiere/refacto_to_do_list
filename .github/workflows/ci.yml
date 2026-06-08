@@ -17,6 +17,7 @@ jobs:
       project: ${{ steps.filter.outputs.project }}
       task: ${{ steps.filter.outputs.task }}
       notification: ${{ steps.filter.outputs.notification }}
+      frontend: ${{ steps.filter.outputs.frontend }}
       root: ${{ steps.filter.outputs.root }}
       dockerfile: ${{ steps.filter.outputs.dockerfile }}
     steps:
@@ -34,6 +35,8 @@ jobs:
               - 'task-service/**'
             notification:
               - 'notification-service/**'
+            frontend:
+              - 'frontend/**'
             root:
               - 'package.json'
               - 'eslint.config.mjs'
@@ -186,3 +189,36 @@ jobs:
 
       - run: npm ci
       - run: npm audit --audit-level=high
+
+  # ─── Build Docker (sans push) ────────────────────────────────────────────────
+
+  docker-build:
+    name: Build Docker ${{ matrix.service }}
+    needs: changes
+    if: |
+      needs.changes.outputs.dockerfile == 'true' ||
+      needs.changes.outputs.auth == 'true' ||
+      needs.changes.outputs.project == 'true' ||
+      needs.changes.outputs.task == 'true' ||
+      needs.changes.outputs.notification == 'true' ||
+      needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - project-service
+          - task-service
+          - notification-service
+          - frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.service }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.service }}
+          push: false
+          tags: ${{ matrix.service }}:pr-${{ github.event.pull_request.number }}
