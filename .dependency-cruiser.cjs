@@ -1,4 +1,3 @@
-/* eslint-env node */
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
     forbidden: [
