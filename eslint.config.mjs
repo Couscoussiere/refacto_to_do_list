@@ -13,6 +13,8 @@ export default tseslint.config(
             'spec/**',
             'tests/**',
             '*.js',
+            '*.cjs',
+
         ],
     },
     {
