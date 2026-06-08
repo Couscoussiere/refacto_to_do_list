@@ -10,13 +10,13 @@
         "microservice",
         "nodejs"
     ],
-    "homepage": "https://github.com/hmeghlat/RefactoToDoList#readme",
+    "homepage": "https://github.com/hmeghlat/refacto_to_do_list#readme",
     "bugs": {
-        "url": "https://github.com/hmeghlat/RefactoToDoList/issues"
+        "url": "https://github.com/hmeghlat/refacto_to_do_list/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/hmeghlat/RefactoToDoList.git"
+        "url": "git+https://github.com/hmeghlat/refacto_to_do_list.git"
     },
     "license": "ISC",
     "author": "",
