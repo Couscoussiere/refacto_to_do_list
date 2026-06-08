@@ -3,6 +3,7 @@ import { vi } from "vitest";
 import type { Connection } from "mysql2";
 import { createTasksRepository } from "../../src/repository/tasksRepository.js";
 import { createApp } from "../../src/app.js";
+import type { RabbitClient } from "../../src/messaging/rabbitmq.js";
 
 const SCHEMA = `
   CREATE TABLE IF NOT EXISTS tasks (
@@ -52,6 +53,6 @@ export const createTestApp = () => {
 	const db = createSQLiteAdapter(sqlite);
 	const repo = createTasksRepository(db);
 	const rabbit = createMockRabbit();
-	const app = createApp(repo, rabbit as any);
+	const app = createApp(repo, rabbit as unknown as RabbitClient);
 	return { app, sqlite, rabbit };
 };

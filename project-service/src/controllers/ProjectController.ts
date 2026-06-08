@@ -3,6 +3,7 @@ import type { Connection, ResultSetHeader, RowDataPacket } from 'mysql2';
 
 import { toProject, type ProjectRow } from '../models/project.js';
 type ProjectRowPacket = RowDataPacket & ProjectRow;
+type TaskItem = { status: string };
 
 import {
     isNonEmptyString,
@@ -239,18 +240,18 @@ export const deleteProjectController = (db: Connection) => {
 
             const allDone =
                 tasks.length === 0 ||
-                tasks.every((t: any) => t.status === 'DONE');
+                tasks.every((t: TaskItem) => t.status === 'DONE');
 
             const body = (req.body ?? {}) as Record<string, unknown>;
 
             const forceDelete =
-                req.query.force === 'true' || (req.body as Record<string, unknown> | undefined)?.force === true;
+                req.query.force === 'true' || body.force === true;
 
             if (!allDone && !forceDelete) {
                 res.status(409).json({
                     message:
                         'Certaines tâches ne sont pas terminées. Ajoutez force=true pour confirmer la suppression.',
-                    tasks: tasks.filter((t: any) => t.status !== 'DONE'),
+                    tasks: tasks.filter((t: TaskItem) => t.status !== 'DONE'),
                 });
                 return;
             }

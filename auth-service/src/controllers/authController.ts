@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { Pool as Connection, ResultSetHeader, RowDataPacket } from "mysql2";
+import type { Pool as Connection } from "mysql2";
 import bcrypt from "bcrypt";
 
 import {
