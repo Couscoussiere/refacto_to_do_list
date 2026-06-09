@@ -1,26 +1,27 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { AddressInfo } from "net";
 import { createApp } from "../src/app.js";
+import WebSocket, { RawData } from 'ws';
 
 interface WsClient {
 	ws: WebSocket;
 	nextMsg: () => Promise<string>;
 	close: () => void;
 }
-
 // Crée une connexion WS avec une queue de messages pour éviter les race conditions
 const connectWs = (port: number): Promise<WsClient> =>
 	new Promise((resolve, reject) => {
-		const ws = new globalThis.WebSocket(`ws://localhost:${port}`);
+		const ws = new WebSocket(`ws://localhost:${port}`);
 		const queue: string[] = [];
 		const waiters: ((s: string) => void)[] = [];
 
-		ws.addEventListener("message", (e: MessageEvent) => {
-			const data = typeof e.data === "string" ? e.data : String(e.data);
+		ws.on('message', (data: RawData) => {
+			const message = data.toString();
+
 			if (waiters.length > 0) {
-				waiters.shift()!(data);
+				waiters.shift()!(message);
 			} else {
-				queue.push(data);
+				queue.push(message);
 			}
 		});
 
@@ -29,10 +30,16 @@ const connectWs = (port: number): Promise<WsClient> =>
 			return new Promise((res) => waiters.push(res));
 		};
 
-		ws.onopen = () => resolve({ ws, nextMsg, close: () => ws.close() });
-		ws.onerror = (e) => reject(e);
-	});
+		ws.on('open', () => {
+			resolve({
+				ws,
+				nextMsg,
+				close: () => ws.close(),
+			});
+		});
 
+		ws.on('error', reject);
+	});
 describe("WebSocket", () => {
 	let httpServer: ReturnType<typeof createApp>["httpServer"];
 	let wss: ReturnType<typeof createApp>["wss"];

@@ -13,6 +13,8 @@ export default tseslint.config(
             'spec/**',
             'tests/**',
             '*.js',
+            '*.cjs',
+
         ],
     },
     {
@@ -34,6 +36,12 @@ export default tseslint.config(
             '@typescript-eslint/no-require-imports': 'off',
             '@typescript-eslint/no-explicit-any': 'warn',
             '@typescript-eslint/no-unused-vars': 'warn',
+            '@typescript-eslint/no-namespace': [
+                'error',
+                {
+                  allowDeclarations: true,
+                },
+              ],
         },
     },
 );
