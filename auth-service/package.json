@@ -10,13 +10,13 @@
         "microservice",
         "nodejs"
     ],
-    "homepage": "https://github.com/Couscoussiere/refacto_to_do_list#readme",
+    "homepage": "https://github.com/couscoussiere/refacto_to_do_list#readme",
     "bugs": {
-        "url": "https://github.com/Couscoussiere/refacto_to_do_list/issues"
+        "url": "https://github.com/couscoussiere/refacto_to_do_list/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Couscoussiere/refacto_to_do_list.git"
+        "url": "git+https://github.com/couscoussiere/refacto_to_do_list.git"
     },
     "license": "ISC",
     "author": "",
