@@ -30,6 +30,49 @@ jobs:
             echo "Aucune modification aujourd'hui, pipeline ignoré."
           fi
 
+  # ─── Tests d'intégration ─────────────────────────────────────────────────────
+
+  integration:
+    name: Tests intégration ${{ matrix.service }}
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: auth-service
+            path: auth-service
+          - service: project-service
+            path: project-service
+          - service: task-service
+            path: task-service
+          - service: notification-service
+            path: notification-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.path }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.path }}
+        run: npm ci
+
+      - name: Run integration tests
+        working-directory: ${{ matrix.path }}
+        run: npm run test:coverage
+
+      - name: Upload rapport coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-coverage-${{ matrix.service }}
+          path: ${{ matrix.path }}/coverage/
+          retention-days: 30
+
   # ─── Tests E2E ───────────────────────────────────────────────────────────────
 
   e2e:
