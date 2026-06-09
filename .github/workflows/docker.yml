@@ -14,17 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        include:
-          - service: auth-service
-            platforms: linux/amd64,linux/arm64
-          - service: project-service
-            platforms: linux/amd64
-          - service: task-service
-            platforms: linux/amd64
-          - service: notification-service
-            platforms: linux/amd64,linux/arm64
-          - service: frontend
-            platforms: linux/amd64,linux/arm64
+        service:
+          - auth-service
+          - project-service
+          - task-service
+          - notification-service
+          - frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +42,7 @@ jobs:
         with:
           context: ./${{ matrix.service }}
           push: true
-          platforms: ${{ matrix.platforms }}
+          platforms: linux/amd64
           tags: ghcr.io/${{ env.REPO_LC }}/${{ matrix.service }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
