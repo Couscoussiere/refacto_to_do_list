@@ -81,6 +81,8 @@ jobs:
     needs: check-changes
     if: needs.check-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
     strategy:
       matrix:
         service:
@@ -96,7 +98,7 @@ jobs:
         run: docker build -t ${{ matrix.service }}:scan ./${{ matrix.service }}
 
       - name: Scan Trivy
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8  # v0.36.0
         with:
           image-ref: ${{ matrix.service }}:scan
           format: sarif
@@ -104,7 +106,7 @@ jobs:
           severity: HIGH,CRITICAL
 
       - name: Upload résultats dans GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@c35d1b164463ee62a100735382aaaa525c5d3496  # v4
         with:
           sarif_file: trivy-${{ matrix.service }}.sarif
           category: trivy-${{ matrix.service }}
@@ -122,11 +124,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Initialisation CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@c35d1b164463ee62a100735382aaaa525c5d3496  # v4
         with:
           languages: javascript-typescript
 
       - name: Analyse CodeQL
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@c35d1b164463ee62a100735382aaaa525c5d3496  # v4
         with:
           category: codeql
