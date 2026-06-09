@@ -152,7 +152,15 @@ jobs:
 
             - run: npm ci
             - run: npm run build
-            - run: npm test
+            - run: npm run test:coverage
+
+            - name: Upload rapport coverage notification-service
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-notification-service
+                  path: notification-service/coverage/
+                  retention-days: 7
 
     # ─── Qualité du code (si fichiers racine ou n'importe quel service modifié) ──
 
