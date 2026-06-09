@@ -7,6 +7,9 @@ on:
 
 jobs:
   build-and-push:
+    permissions:
+      contents: read
+      packages: write
     name: Build & Push ${{ matrix.service }}
     runs-on: ubuntu-latest
     strategy:
