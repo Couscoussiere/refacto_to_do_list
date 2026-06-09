@@ -243,6 +243,28 @@ jobs:
             working-directory: ${{ matrix.service }}
             run: npm audit --audit-level=high
 
+  # ─── Validation Docker Compose ──────────────────────────────────────────────
+
+  validate-compose:
+      name: Validation Docker Compose
+      needs: changes
+      if: |
+          needs.changes.outputs.dockerfile == 'true' ||
+          needs.changes.outputs.auth == 'true' ||
+          needs.changes.outputs.project == 'true' ||
+          needs.changes.outputs.task == 'true' ||
+          needs.changes.outputs.notification == 'true' ||
+          needs.changes.outputs.frontend == 'true'
+      runs-on: ubuntu-latest
+      steps:
+          - uses: actions/checkout@v4
+
+          - name: Copier .env.example en .env
+            run: cp .env.example .env
+
+          - name: Valider docker-compose.yml
+            run: docker compose config --quiet
+
     # ─── Build Docker (sans push) ────────────────────────────────────────────────
 
     docker-build:
