@@ -1,5 +1,7 @@
 FROM node:20-alpine
 
+RUN npm install -g npm@latest && npm cache clean --force
+
 WORKDIR /app
 
 COPY package*.json ./
