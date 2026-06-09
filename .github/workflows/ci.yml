@@ -17,6 +17,7 @@ jobs:
       project: ${{ steps.filter.outputs.project }}
       task: ${{ steps.filter.outputs.task }}
       notification: ${{ steps.filter.outputs.notification }}
+      frontend: ${{ steps.filter.outputs.frontend }}
       root: ${{ steps.filter.outputs.root }}
       dockerfile: ${{ steps.filter.outputs.dockerfile }}
     steps:
@@ -34,6 +35,8 @@ jobs:
               - 'task-service/**'
             notification:
               - 'notification-service/**'
+            frontend:
+              - 'frontend/**'
             root:
               - 'package.json'
               - 'eslint.config.mjs'
@@ -61,6 +64,7 @@ jobs:
           cache-dependency-path: auth-service/package-lock.json
 
       - run: npm ci
+      - run: npm run build
       - run: npm test
 
   test-project:
@@ -81,6 +85,7 @@ jobs:
           cache-dependency-path: project-service/package-lock.json
 
       - run: npm ci
+      - run: npm run build
       - run: npm test
 
   test-task:
@@ -101,6 +106,7 @@ jobs:
           cache-dependency-path: task-service/package-lock.json
 
       - run: npm ci
+      - run: npm run build
       - run: npm test
 
   test-notification:
@@ -121,6 +127,7 @@ jobs:
           cache-dependency-path: notification-service/package-lock.json
 
       - run: npm ci
+      - run: npm run build
       - run: npm test
 
   # ─── Qualité du code (si fichiers racine ou n'importe quel service modifié) ──
@@ -172,10 +179,21 @@ jobs:
   # ─── Sécurité des dépendances ────────────────────────────────────────────────
 
   audit:
-    name: Audit sécurité
+    name: Audit sécurité ${{ matrix.service }}
     needs: changes
-    if: needs.changes.outputs.root == 'true'
+    if: |
+      needs.changes.outputs.auth == 'true' ||
+      needs.changes.outputs.project == 'true' ||
+      needs.changes.outputs.task == 'true' ||
+      needs.changes.outputs.notification == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - project-service
+          - task-service
+          - notification-service
     steps:
       - uses: actions/checkout@v4
 
@@ -183,6 +201,45 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
 
-      - run: npm ci
-      - run: npm audit --audit-level=high
+      - name: Install dependencies
+        working-directory: ${{ matrix.service }}
+        run: npm ci
+
+      - name: Run npm audit
+        working-directory: ${{ matrix.service }}
+        run: npm audit --audit-level=high
+
+  # ─── Build Docker (sans push) ────────────────────────────────────────────────
+
+  docker-build:
+    name: Build Docker ${{ matrix.service }}
+    needs: changes
+    if: |
+      needs.changes.outputs.dockerfile == 'true' ||
+      needs.changes.outputs.auth == 'true' ||
+      needs.changes.outputs.project == 'true' ||
+      needs.changes.outputs.task == 'true' ||
+      needs.changes.outputs.notification == 'true' ||
+      needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - project-service
+          - task-service
+          - notification-service
+          - frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3
+
+      - name: Build ${{ matrix.service }}
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6
+        with:
+          context: ${{ matrix.service }}
+          push: false
+          tags: ${{ matrix.service }}:pr-${{ github.event.pull_request.number }}
