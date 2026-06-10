@@ -19,7 +19,7 @@ type ProjectRowPacket = RowDataPacket & {
 
 const getTaskServiceUrl = (): string => {
   const baseUrl = process.env.TASK_SERVICE_URL || "http://localhost:3002";
-  return baseUrl.replace(/\/+$/, "");
+  return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 };
 
 const fetchTasksForProject = async (projectId: number): Promise<TaskFromApi[]> => {

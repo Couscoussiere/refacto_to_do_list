@@ -5,7 +5,7 @@ type ProjectDates = {
 
 const getProjectServiceUrl = (): string => {
   const base = process.env.PROJECT_SERVICE_URL ?? "http://localhost:3001";
-  return base.replace(/\/+$/, "");
+  return base.endsWith("/") ? base.slice(0, -1) : base;
 };
 
 export const fetchProjectStatus = async (projectId: number, authToken: string): Promise<string | null> => {
