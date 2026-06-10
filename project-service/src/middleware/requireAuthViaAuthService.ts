@@ -21,7 +21,7 @@ declare global {
 
 const getAuthServiceUrl = (): string => {
 	const baseUrl = process.env.AUTH_SERVICE_URL || "http://localhost:3000";
-	return baseUrl.replace(/\/+$/, "");
+	return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 };
 
 export const requireAuthViaAuthService = async (

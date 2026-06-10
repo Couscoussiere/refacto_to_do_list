@@ -23,7 +23,7 @@ const parsePositiveInt = (value: unknown): number | null => {
 
 const getTaskServiceUrl = (): string => {
   const baseUrl = process.env.TASK_SERVICE_URL || "http://localhost:3002";
-  return baseUrl.replace(/\/+$/, "");
+  return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 };
 
 type TaskFromApi = {
