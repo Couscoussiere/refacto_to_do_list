@@ -4,12 +4,16 @@ import type { RabbitClient } from "./messaging/rabbitmq.js";
 import type { TasksRepository } from "./repository/tasksRepository.js";
 import { createTasksRouter } from "./routes/tasks.js";
 
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim());
+
 export const createApp = (repo: TasksRepository, rabbit: RabbitClient) => {
   const app = express();
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
-  app.use(cors());
+  app.use(cors({ origin: allowedOrigins }));
 
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok" });
