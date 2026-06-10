@@ -44,7 +44,7 @@ describe("GET /auth/me", () => {
 	it("token expiré → 401", async () => {
 		const expiredToken = jwt.sign(
 			{ sub: "1", email: USER.email, exp: Math.floor(Date.now() / 1000) - 3600 },
-			"test-secret-key"
+			process.env.JWT_SECRET as string
 		);
 
 		const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${expiredToken}`);
@@ -59,7 +59,7 @@ describe("GET /auth/me", () => {
 	});
 
 	it("userId dans le token inexistant en base → 404", async () => {
-		const fakeToken = jwt.sign({ sub: "99999", email: "fantome@test.com" }, "test-secret-key");
+		const fakeToken = jwt.sign({ sub: "99999", email: "fantome@test.com" }, process.env.JWT_SECRET as string);
 
 		const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${fakeToken}`);
 
