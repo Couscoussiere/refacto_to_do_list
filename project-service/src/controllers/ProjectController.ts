@@ -215,11 +215,14 @@ export const deleteProjectController = (db: Connection) => {
                 return;
             }
 
-            const taskServiceUrl =
+            const taskServiceUrlRaw =
                 process.env.TASK_SERVICE_URL || 'http://localhost:3002';
+            const taskServiceUrl = taskServiceUrlRaw.endsWith('/')
+                ? taskServiceUrlRaw.slice(0, -1)
+                : taskServiceUrlRaw;
 
             const response = await fetch(
-                `${taskServiceUrl.replace(/\/+$/, '')}/tasks?projectId=${id}`,
+                `${taskServiceUrl}/tasks?projectId=${id}`,
                 {
                     headers: { accept: 'application/json' },
                 },
