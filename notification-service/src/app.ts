@@ -3,11 +3,15 @@ import cors from "cors";
 import http from "http";
 import { WebSocketServer } from "ws";
 
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+	.split(",")
+	.map((origin) => origin.trim());
+
 export const createApp = () => {
 	const app = express();
 	app.use(express.json());
 	app.use(express.urlencoded({ extended: false }));
-	app.use(cors());
+	app.use(cors({ origin: allowedOrigins }));
 
 	app.get("/health", (_req, res) => {
 		res.status(200).json({ status: "ok" });
