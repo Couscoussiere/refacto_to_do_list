@@ -47,7 +47,7 @@ describe("requireAuth middleware", () => {
 	it("token expiré → 401", async () => {
 		const expiredToken = jwt.sign(
 			{ sub: "1", email: USER.email, exp: Math.floor(Date.now() / 1000) - 3600 },
-			"test-secret-key"
+			process.env.JWT_SECRET as string
 		);
 
 		const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${expiredToken}`);
@@ -64,7 +64,7 @@ describe("requireAuth middleware", () => {
 	});
 
 	it("token sans sub → 401", async () => {
-		const tokenSansSub = jwt.sign({ email: USER.email }, "test-secret-key");
+		const tokenSansSub = jwt.sign({ email: USER.email }, process.env.JWT_SECRET as string);
 
 		const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${tokenSansSub}`);
 
