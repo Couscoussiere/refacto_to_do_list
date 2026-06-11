@@ -39,10 +39,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & Push ${{ matrix.service }}
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6
-        with:
-          context: ./${{ matrix.service }}
-          push: true
-          platforms: linux/amd64
-          tags: ghcr.io/${{ env.REPO_LC }}/${{ matrix.service }}:latest
+      - name: Set image name
+        run: |
+          echo "IMAGE_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Promote dev image to main tags
+        run: |
+          IMAGE="ghcr.io/${{ env.IMAGE_NAME }}/${{ matrix.service }}"
+
+          docker pull "$IMAGE:dev"
+
+          docker tag "$IMAGE:dev" "$IMAGE:latest"
+          docker tag "$IMAGE:dev" "$IMAGE:main"
+          docker tag "$IMAGE:dev" "$IMAGE:sha-${{ github.sha }}"
+
+          docker push "$IMAGE:latest"
+          docker push "$IMAGE:main"
+          docker push "$IMAGE:sha-${{ github.sha }}"
