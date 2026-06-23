@@ -247,62 +247,62 @@ jobs:
 
   # ─── Vérification des licences ──────────────────────────────────────────────
 
-  license-check:
-      name: Vérification licences ${{ matrix.service }}
-      needs: changes
-      if: |
-          needs.changes.outputs.auth == 'true' ||
-          needs.changes.outputs.project == 'true' ||
-          needs.changes.outputs.task == 'true' ||
-          needs.changes.outputs.notification == 'true' ||
-          needs.changes.outputs.frontend == 'true'
-      runs-on: ubuntu-latest
-      strategy:
-          matrix:
-              service:
-                  - auth-service
-                  - project-service
-                  - task-service
-                  - notification-service
-                  - frontend
-      steps:
-          - uses: actions/checkout@v4
+    license-check:
+        name: Vérification licences ${{ matrix.service }}
+        needs: changes
+        if: |
+            needs.changes.outputs.auth == 'true' ||
+            needs.changes.outputs.project == 'true' ||
+            needs.changes.outputs.task == 'true' ||
+            needs.changes.outputs.notification == 'true' ||
+            needs.changes.outputs.frontend == 'true'
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                service:
+                    - auth-service
+                    - project-service
+                    - task-service
+                    - notification-service
+                    - frontend
+        steps:
+            - uses: actions/checkout@v4
 
-          - uses: actions/setup-node@v4
-            with:
-                node-version: 20
-                cache: npm
-                cache-dependency-path: ${{ matrix.service }}/package-lock.json
+            - uses: actions/setup-node@v4
+                with:
+                    node-version: 20
+                    cache: npm
+                    cache-dependency-path: ${{ matrix.service }}/package-lock.json
 
-          - name: Install dependencies
-            working-directory: ${{ matrix.service }}
-            run: npm ci
+            - name: Install dependencies
+                working-directory: ${{ matrix.service }}
+                run: npm ci
 
-          - name: Vérifier les licences
-            working-directory: ${{ matrix.service }}
-            run: npx license-checker --onlyAllow 'MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Python-2.0;Unlicense;0BSD'
+            - name: Vérifier les licences
+                working-directory: ${{ matrix.service }}
+                run: npx license-checker --onlyAllow 'MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Python-2.0;Unlicense;0BSD'
 
   # ─── Validation Docker Compose ──────────────────────────────────────────────
 
-  validate-compose:
-      name: Validation Docker Compose
-      needs: changes
-      if: |
-          needs.changes.outputs.dockerfile == 'true' ||
-          needs.changes.outputs.auth == 'true' ||
-          needs.changes.outputs.project == 'true' ||
-          needs.changes.outputs.task == 'true' ||
-          needs.changes.outputs.notification == 'true' ||
-          needs.changes.outputs.frontend == 'true'
-      runs-on: ubuntu-latest
-      steps:
-          - uses: actions/checkout@v4
+    validate-compose:
+        name: Validation Docker Compose
+        needs: changes
+        if: |
+            needs.changes.outputs.dockerfile == 'true' ||
+            needs.changes.outputs.auth == 'true' ||
+            needs.changes.outputs.project == 'true' ||
+            needs.changes.outputs.task == 'true' ||
+            needs.changes.outputs.notification == 'true' ||
+            needs.changes.outputs.frontend == 'true'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
 
-          - name: Copier .env.example en .env
-            run: cp .env.example .env
+            - name: Copier .env.example en .env
+                run: cp .env.example .env
 
-          - name: Valider docker-compose.yml
-            run: docker compose config --quiet
+            - name: Valider docker-compose.yml
+                run: docker compose config --quiet
 
     # ─── Build Docker (sans push) ────────────────────────────────────────────────
 
