@@ -37,6 +37,8 @@ jobs:
                         - 'notification-service/**'
                       frontend:
                         - 'frontend/**'
+                        - 'tests-e2e/**'
+                        - 'playwright.config.js'
                       root:
                         - 'package.json'
                         - 'eslint.config.mjs'
