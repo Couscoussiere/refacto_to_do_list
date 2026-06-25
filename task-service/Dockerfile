@@ -12,6 +12,8 @@ COPY tsconfig.base.json /tsconfig.base.json
 COPY task-service/tsconfig.json ./tsconfig.json
 COPY task-service/src ./src
 
+COPY task-service/sql ./sql
+
 RUN npm run build
 
 ENV NODE_ENV=production

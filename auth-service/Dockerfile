@@ -12,6 +12,8 @@ COPY tsconfig.base.json /tsconfig.base.json
 COPY auth-service/tsconfig.json ./tsconfig.json
 COPY auth-service/src ./src
 
+COPY auth-service/sql ./sql
+
 RUN npm run build
 
 ENV NODE_ENV=production
