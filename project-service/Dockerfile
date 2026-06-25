@@ -25,6 +25,7 @@ RUN npm run build
 FROM node:20-alpine AS runtime
 
 RUN apk update && apk upgrade --no-cache
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 WORKDIR /app
 
