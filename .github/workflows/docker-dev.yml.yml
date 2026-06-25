@@ -14,13 +14,23 @@ jobs:
     name: Build & Push Dev ${{ matrix.service }}
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        service:
-          - auth-service
-          - project-service
-          - task-service
-          - notification-service
-          - frontend
+  matrix:
+    include:
+      - service: auth-service
+        context: .
+        dockerfile: ./auth-service/Dockerfile
+      - service: project-service
+        context: .
+        dockerfile: ./project-service/Dockerfile
+      - service: task-service
+        context: .
+        dockerfile: ./task-service/Dockerfile
+      - service: notification-service
+        context: .
+        dockerfile: ./notification-service/Dockerfile
+      - service: frontend
+        context: ./frontend
+        dockerfile: ./frontend/Dockerfile
 
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +53,7 @@ jobs:
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
         with:
           context: ./${{ matrix.service }}
+          file: ${{ matrix.dockerfile }}
           push: true
           platforms: linux/amd64
           tags: |

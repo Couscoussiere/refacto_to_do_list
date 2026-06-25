@@ -333,7 +333,7 @@ jobs:
                       dockerfile: notification-service/Dockerfile
                     - service: frontend
                       context: ./frontend
-                      dockerfile: Dockerfile
+                      dockerfile: ./frontend/Dockerfile
         steps:
             - uses: actions/checkout@v4
 
