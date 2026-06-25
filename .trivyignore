@@ -1,0 +1,4 @@
+# CVE dans undici bundlé dans npm CLI (usr/local/lib/node_modules/npm/node_modules/undici)
+# npm n'est pas invoqué en production (CMD = node dist/index.js)
+# La vulnérabilité WebSocket DoS est inaccessible dans ce contexte
+CVE-2026-12151

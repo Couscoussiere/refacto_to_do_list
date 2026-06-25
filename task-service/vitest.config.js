@@ -4,9 +4,6 @@ export default defineConfig({
         environment: "node",
         globals: true,
         pool: "forks",
-        env: {
-            JWT_SECRET: "test-secret-key",
-        },
         coverage: {
             provider: "v8",
             reporter: ["text", "html"],
