@@ -9,16 +9,16 @@ const USER = {
 	lastName: "Dick",
 };
 
-describe("POST /auth/login", () => {
+describe("POST /v1/auth/login", () => {
 	let app: ReturnType<typeof createTestApp>["app"];
 
 	beforeEach(async () => {
 		({ app } = createTestApp());
-		await request(app).post("/auth/register").send(USER);
+		await request(app).post("/v1/auth/register").send(USER);
 	});
 
 	it("identifiants valides → 200 + user + token JWT", async () => {
-		const res = await request(app).post("/auth/login").send({
+		const res = await request(app).post("/v1/auth/login").send({
 			email: USER.email,
 			password: USER.password,
 		});
@@ -33,7 +33,7 @@ describe("POST /auth/login", () => {
 	});
 
 	it("mauvais mot de passe → 401", async () => {
-		const res = await request(app).post("/auth/login").send({
+		const res = await request(app).post("/v1/auth/login").send({
 			email: USER.email,
 			password: "mauvais-password",
 		});
@@ -42,7 +42,7 @@ describe("POST /auth/login", () => {
 	});
 
 	it("email inexistant → 401", async () => {
-		const res = await request(app).post("/auth/login").send({
+		const res = await request(app).post("/v1/auth/login").send({
 			email: "inconnu@test.com",
 			password: USER.password,
 		});
@@ -51,7 +51,7 @@ describe("POST /auth/login", () => {
 	});
 
 	it("email manquant → 400", async () => {
-		const res = await request(app).post("/auth/login").send({
+		const res = await request(app).post("/v1/auth/login").send({
 			password: USER.password,
 		});
 
@@ -59,7 +59,7 @@ describe("POST /auth/login", () => {
 	});
 
 	it("password manquant → 400", async () => {
-		const res = await request(app).post("/auth/login").send({
+		const res = await request(app).post("/v1/auth/login").send({
 			email: USER.email,
 		});
 
@@ -67,7 +67,7 @@ describe("POST /auth/login", () => {
 	});
 
 	it("token JWT retourné contient le bon userId et email", async () => {
-		const res = await request(app).post("/auth/login").send({
+		const res = await request(app).post("/v1/auth/login").send({
 			email: USER.email,
 			password: USER.password,
 		});

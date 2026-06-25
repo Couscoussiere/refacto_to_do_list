@@ -24,47 +24,47 @@ describe("PUT /tasks/:id", () => {
 	beforeEach(async () => {
 		({ app, rabbit } = createTestApp());
 		mockProjectFetch();
-		const res = await request(app).post("/tasks").send(TASK);
+		const res = await request(app).post("/v1/tasks").send(TASK);
 		taskId = res.body.task.id as number;
 	});
 
 	afterEach(() => vi.unstubAllGlobals());
 
 	it("mise à jour du nom → 200", async () => {
-		const res = await request(app).put(`/tasks/${taskId}`).send({ name: "Nouveau nom" });
+		const res = await request(app).put(`/v1/tasks/${taskId}`).send({ name: "Nouveau nom" });
 
 		expect(res.status).toBe(200);
 		expect(res.body.task.name).toBe("Nouveau nom");
 	});
 
 	it("mise à jour de la priorité → 200", async () => {
-		const res = await request(app).put(`/tasks/${taskId}`).send({ priority: "HIGH" });
+		const res = await request(app).put(`/v1/tasks/${taskId}`).send({ priority: "HIGH" });
 
 		expect(res.status).toBe(200);
 		expect(res.body.task.priority).toBe("HIGH");
 	});
 
 	it("mise à jour du statut → 200", async () => {
-		const res = await request(app).put(`/tasks/${taskId}`).send({ status: "IN_PROGRESS" });
+		const res = await request(app).put(`/v1/tasks/${taskId}`).send({ status: "IN_PROGRESS" });
 
 		expect(res.status).toBe(200);
 		expect(res.body.task.status).toBe("IN_PROGRESS");
 	});
 
 	it("name vide → 400", async () => {
-		const res = await request(app).put(`/tasks/${taskId}`).send({ name: "" });
+		const res = await request(app).put(`/v1/tasks/${taskId}`).send({ name: "" });
 
 		expect(res.status).toBe(400);
 	});
 
 	it("priority invalide → 400", async () => {
-		const res = await request(app).put(`/tasks/${taskId}`).send({ priority: "ULTRA" });
+		const res = await request(app).put(`/v1/tasks/${taskId}`).send({ priority: "ULTRA" });
 
 		expect(res.status).toBe(400);
 	});
 
 	it("status invalide → 400", async () => {
-		const res = await request(app).put(`/tasks/${taskId}`).send({ status: "BLOQUEE" });
+		const res = await request(app).put(`/v1/tasks/${taskId}`).send({ status: "BLOQUEE" });
 
 		expect(res.status).toBe(400);
 	});
@@ -85,13 +85,13 @@ describe("PUT /tasks/:id", () => {
 		vi.unstubAllGlobals();
 		mockProjectFetch("DONE");
 
-		const res = await request(app).put(`/tasks/${taskId}`).send({ name: "Test" });
+		const res = await request(app).put(`/v1/tasks/${taskId}`).send({ name: "Test" });
 
 		expect(res.status).toBe(422);
 	});
 
 	it("passage en DONE → publie TaskCompleted", async () => {
-		await request(app).put(`/tasks/${taskId}`).send({ status: "DONE" });
+		await request(app).put(`/v1/tasks/${taskId}`).send({ status: "DONE" });
 
 		expect(rabbit.publishEvent).toHaveBeenCalledWith(
 			expect.objectContaining({ type: "TaskCompleted" }),
@@ -99,7 +99,7 @@ describe("PUT /tasks/:id", () => {
 	});
 
 	it("passage en IN_PROGRESS → publie TaskStarted", async () => {
-		await request(app).put(`/tasks/${taskId}`).send({ status: "IN_PROGRESS" });
+		await request(app).put(`/v1/tasks/${taskId}`).send({ status: "IN_PROGRESS" });
 
 		expect(rabbit.publishEvent).toHaveBeenCalledWith(
 			expect.objectContaining({ type: "TaskStarted" }),
@@ -107,7 +107,7 @@ describe("PUT /tasks/:id", () => {
 	});
 
 	it("passage en CANCELLED → publie TaskCancelled", async () => {
-		await request(app).put(`/tasks/${taskId}`).send({ status: "CANCELLED" });
+		await request(app).put(`/v1/tasks/${taskId}`).send({ status: "CANCELLED" });
 
 		expect(rabbit.publishEvent).toHaveBeenCalledWith(
 			expect.objectContaining({ type: "TaskCancelled" }),
@@ -115,10 +115,10 @@ describe("PUT /tasks/:id", () => {
 	});
 
 	it("passage en TODO → publie TaskReopened", async () => {
-		await request(app).put(`/tasks/${taskId}`).send({ status: "IN_PROGRESS" });
+		await request(app).put(`/v1/tasks/${taskId}`).send({ status: "IN_PROGRESS" });
 		rabbit.publishEvent.mockClear();
 
-		await request(app).put(`/tasks/${taskId}`).send({ status: "TODO" });
+		await request(app).put(`/v1/tasks/${taskId}`).send({ status: "TODO" });
 
 		expect(rabbit.publishEvent).toHaveBeenCalledWith(
 			expect.objectContaining({ type: "TaskReopened" }),

@@ -1,5 +1,5 @@
 const API_BASE = "http://localhost:8080";
-const AUTH_BASE = `${API_BASE}/auth`;
+const AUTH_BASE = `${API_BASE}/v1/auth`;
 
 
 import { RegisterPayload } from '../interface/Auth/RegisterPayload';

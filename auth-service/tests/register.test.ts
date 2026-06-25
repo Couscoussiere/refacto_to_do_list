@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { createTestApp } from "./helpers/createTestApp.js";
 
-describe("POST /auth/register", () => {
+describe("POST /v1/auth/register", () => {
 	let app: ReturnType<typeof createTestApp>["app"];
 	let sqlite: ReturnType<typeof createTestApp>["sqlite"];
 
@@ -11,7 +11,7 @@ describe("POST /auth/register", () => {
 	});
 
 	it("inscription avec données valides → 201 + user + token", async () => {
-		const res = await request(app).post("/auth/register").send({
+		const res = await request(app).post("/v1/auth/register").send({
 			email: "olivier.dick@test.com",
 			password: "Password123",
 			firstName: "Olivier",
@@ -31,15 +31,15 @@ describe("POST /auth/register", () => {
 	it("email déjà utilisé → 409", async () => {
 		const payload = { email: "olivier.dick@test.com", password: "Password123", firstName: "Olivier", lastName: "Dick" };
 
-		await request(app).post("/auth/register").send(payload);
-		const res = await request(app).post("/auth/register").send(payload);
+		await request(app).post("/v1/auth/register").send(payload);
+		const res = await request(app).post("/v1/auth/register").send(payload);
 
 		expect(res.status).toBe(409);
 		expect(res.body.message).toBe("Email already registered");
 	});
 
 	it("email manquant → 400", async () => {
-		const res = await request(app).post("/auth/register").send({
+		const res = await request(app).post("/v1/auth/register").send({
 			password: "Password123",
 			firstName: "Olivier",
 			lastName: "Dick",
@@ -49,7 +49,7 @@ describe("POST /auth/register", () => {
 	});
 
 	it("password manquant → 400", async () => {
-		const res = await request(app).post("/auth/register").send({
+		const res = await request(app).post("/v1/auth/register").send({
 			email: "olivier.dick@test.com",
 			firstName: "Olivier",
 			lastName: "Dick",
@@ -59,7 +59,7 @@ describe("POST /auth/register", () => {
 	});
 
 	it("firstName manquant → 400", async () => {
-		const res = await request(app).post("/auth/register").send({
+		const res = await request(app).post("/v1/auth/register").send({
 			email: "olivier.dick@test.com",
 			password: "Password123",
 			lastName: "Dick",
@@ -69,7 +69,7 @@ describe("POST /auth/register", () => {
 	});
 
 	it("lastName manquant → 400", async () => {
-		const res = await request(app).post("/auth/register").send({
+		const res = await request(app).post("/v1/auth/register").send({
 			email: "olivier.dick@test.com",
 			password: "Password123",
 			firstName: "Olivier",
@@ -79,7 +79,7 @@ describe("POST /auth/register", () => {
 	});
 
 	it("email format invalide → 400", async () => {
-		const res = await request(app).post("/auth/register").send({
+		const res = await request(app).post("/v1/auth/register").send({
 			email: "pas-un-email",
 			password: "Password123",
 			firstName: "Olivier",
@@ -90,7 +90,7 @@ describe("POST /auth/register", () => {
 	});
 
 	it("password stocké hashé en base (non en clair)", async () => {
-		await request(app).post("/auth/register").send({
+		await request(app).post("/v1/auth/register").send({
 			email: "olivier.dick@test.com",
 			password: "Password123",
 			firstName: "Olivier",

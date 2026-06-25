@@ -24,21 +24,21 @@ describe("DELETE /tasks/:id", () => {
 	beforeEach(async () => {
 		({ app, rabbit } = createTestApp());
 		mockProjectFetch();
-		const res = await request(app).post("/tasks").send(TASK);
+		const res = await request(app).post("/v1/tasks").send(TASK);
 		taskId = res.body.task.id as number;
 	});
 
 	afterEach(() => vi.unstubAllGlobals());
 
 	it("suppression → 204", async () => {
-		const res = await request(app).delete(`/tasks/${taskId}`);
+		const res = await request(app).delete(`/v1/tasks/${taskId}`);
 
 		expect(res.status).toBe(204);
 	});
 
 	it("tâche supprimée n'est plus accessible → 404", async () => {
-		await request(app).delete(`/tasks/${taskId}`);
-		const res = await request(app).get(`/tasks/${taskId}`);
+		await request(app).delete(`/v1/tasks/${taskId}`);
+		const res = await request(app).get(`/v1/tasks/${taskId}`);
 
 		expect(res.status).toBe(404);
 	});
@@ -56,7 +56,7 @@ describe("DELETE /tasks/:id", () => {
 	});
 
 	it("publie l'événement TaskDeleted", async () => {
-		await request(app).delete(`/tasks/${taskId}`);
+		await request(app).delete(`/v1/tasks/${taskId}`);
 
 		expect(rabbit.publishEvent).toHaveBeenCalledWith(
 			expect.objectContaining({ type: "TaskDeleted" }),
