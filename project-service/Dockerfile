@@ -1,5 +1,6 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
+RUN apk add --no-cache python3 make g++
 RUN apk update && apk upgrade --no-cache
 RUN npm install -g npm@latest && npm cache clean --force
 
@@ -21,9 +22,20 @@ COPY project-service/sql ./project-service/sql
 WORKDIR /app/project-service
 RUN npm run build
 
+FROM node:20-alpine AS runtime
+
+RUN apk update && apk upgrade --no-cache
+
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/project-service/package.json ./project-service/
+COPY --from=builder /app/project-service/dist ./project-service/dist
+COPY --from=builder /app/project-service/sql ./project-service/sql
+
+WORKDIR /app/project-service
 ENV NODE_ENV=production
 EXPOSE 3001
-
 USER node
-
 CMD ["node", "dist/index.js"]

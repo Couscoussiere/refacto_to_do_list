@@ -1,5 +1,6 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
+RUN apk add --no-cache python3 make g++
 RUN apk update && apk upgrade --no-cache
 RUN npm install -g npm@latest && npm cache clean --force
 
@@ -20,9 +21,19 @@ COPY auth-service/src ./auth-service/src
 WORKDIR /app/auth-service
 RUN npm run build
 
+FROM node:20-alpine AS runtime
+
+RUN apk update && apk upgrade --no-cache
+
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/auth-service/package.json ./auth-service/
+COPY --from=builder /app/auth-service/dist ./auth-service/dist
+
+WORKDIR /app/auth-service
 ENV NODE_ENV=production
 EXPOSE 3000
-
 USER node
-
 CMD ["node", "dist/index.js"]
