@@ -318,12 +318,17 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                service:
-                    - auth-service
-                    - project-service
-                    - task-service
-                    - notification-service
-                    - frontend
+                include:
+                    - service: auth-service
+                      context: .
+                    - service: project-service
+                      context: .
+                    - service: task-service
+                      context: .
+                    - service: notification-service
+                      context: .
+                    - service: frontend
+                      context: ./frontend
         steps:
             - uses: actions/checkout@v4
 
@@ -332,7 +337,7 @@ jobs:
             - name: Build ${{ matrix.service }}
               uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6
               with:
-                  context: .
+                  context: ${{ matrix.context }}
                   file: ${{ matrix.service }}/Dockerfile
                   push: false
                   load: true
