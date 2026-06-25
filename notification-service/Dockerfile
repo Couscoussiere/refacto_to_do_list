@@ -15,4 +15,6 @@ RUN npm run build
 ENV NODE_ENV=production
 EXPOSE 3003
 
+USER node
+
 CMD ["node", "dist/index.js"]
