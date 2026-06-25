@@ -53,9 +53,6 @@ jobs:
         needs: changes
         if: needs.changes.outputs.auth == 'true'
         runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: auth-service
         steps:
             - uses: actions/checkout@v4
 
@@ -63,11 +60,18 @@ jobs:
               with:
                   node-version: 20
                   cache: npm
-                  cache-dependency-path: auth-service/package-lock.json
+                  cache-dependency-path: package-lock.json
 
-            - run: npm ci
-            - run: npm run build
-            - run: npm run test:coverage
+            - name: Installer les dépendances
+              run: npm ci
+
+            - name: Build
+              working-directory: auth-service
+              run: npm run build
+
+            - name: Tests
+              working-directory: auth-service
+              run: npm run test:coverage
 
             - name: Upload rapport coverage auth-service
               if: always()
@@ -82,9 +86,6 @@ jobs:
         needs: changes
         if: needs.changes.outputs.project == 'true'
         runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: project-service
         steps:
             - uses: actions/checkout@v4
 
@@ -92,11 +93,18 @@ jobs:
               with:
                   node-version: 20
                   cache: npm
-                  cache-dependency-path: project-service/package-lock.json
+                  cache-dependency-path: package-lock.json
 
-            - run: npm ci
-            - run: npm run build
-            - run: npm run test:coverage
+            - name: Installer les dépendances
+              run: npm ci
+
+            - name: Build
+              working-directory: project-service
+              run: npm run build
+
+            - name: Tests
+              working-directory: project-service
+              run: npm run test:coverage
 
             - name: Upload rapport coverage project-service
               if: always()
@@ -111,9 +119,6 @@ jobs:
         needs: changes
         if: needs.changes.outputs.task == 'true'
         runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: task-service
         steps:
             - uses: actions/checkout@v4
 
@@ -121,11 +126,18 @@ jobs:
               with:
                   node-version: 20
                   cache: npm
-                  cache-dependency-path: task-service/package-lock.json
+                  cache-dependency-path: package-lock.json
 
-            - run: npm ci
-            - run: npm run build
-            - run: npm run test:coverage
+            - name: Installer les dépendances
+              run: npm ci
+
+            - name: Build
+              working-directory: task-service
+              run: npm run build
+
+            - name: Tests
+              working-directory: task-service
+              run: npm run test:coverage
 
             - name: Upload rapport coverage task-service
               if: always()
@@ -140,9 +152,6 @@ jobs:
         needs: changes
         if: needs.changes.outputs.notification == 'true'
         runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: notification-service
         steps:
             - uses: actions/checkout@v4
 
@@ -150,11 +159,18 @@ jobs:
               with:
                   node-version: 20
                   cache: npm
-                  cache-dependency-path: notification-service/package-lock.json
+                  cache-dependency-path: package-lock.json
 
-            - run: npm ci
-            - run: npm run build
-            - run: npm run test:coverage
+            - name: Installer les dépendances
+              run: npm ci
+
+            - name: Build
+              working-directory: notification-service
+              run: npm run build
+
+            - name: Tests
+              working-directory: notification-service
+              run: npm run test:coverage
 
             - name: Upload rapport coverage notification-service
               if: always()
@@ -183,6 +199,7 @@ jobs:
               with:
                   node-version: 20
                   cache: npm
+                  cache-dependency-path: package-lock.json
 
             - run: npm ci
             - run: npm run lint
@@ -213,7 +230,7 @@ jobs:
     # ─── Sécurité des dépendances ────────────────────────────────────────────────
 
     audit:
-      name: Audit sécurité ${{ matrix.service }}
+      name: Audit sécurité
       needs: changes
       if: |
           needs.changes.outputs.auth == 'true' ||
@@ -221,13 +238,6 @@ jobs:
           needs.changes.outputs.task == 'true' ||
           needs.changes.outputs.notification == 'true'
       runs-on: ubuntu-latest
-      strategy:
-          matrix:
-              service:
-                  - auth-service
-                  - project-service
-                  - task-service
-                  - notification-service
       steps:
           - uses: actions/checkout@v4
 
@@ -235,20 +245,18 @@ jobs:
             with:
                 node-version: 20
                 cache: npm
-                cache-dependency-path: ${{ matrix.service }}/package-lock.json
+                cache-dependency-path: package-lock.json
 
           - name: Install dependencies
-            working-directory: ${{ matrix.service }}
             run: npm ci
 
           - name: Run npm audit
-            working-directory: ${{ matrix.service }}
             run: npm audit --audit-level=high
 
       # ─── Vérification des licences ──────────────────────────────────────────────
 
     license-check:
-        name: Vérification licences ${{ matrix.service }}
+        name: Vérification licences ${{ matrix.name }}
         needs: changes
         if: |
             needs.changes.outputs.auth == 'true' ||
@@ -259,12 +267,13 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                service:
-                    - auth-service
-                    - project-service
-                    - task-service
-                    - notification-service
-                    - frontend
+                include:
+                    - name: backend
+                      dir: .
+                      lock: package-lock.json
+                    - name: frontend
+                      dir: frontend
+                      lock: frontend/package-lock.json
         steps:
             - uses: actions/checkout@v4
 
@@ -272,14 +281,14 @@ jobs:
               with:
                   node-version: 20
                   cache: npm
-                  cache-dependency-path: ${{ matrix.service }}/package-lock.json
+                  cache-dependency-path: ${{ matrix.lock }}
 
             - name: Install dependencies
-              working-directory: ${{ matrix.service }}
+              working-directory: ${{ matrix.dir }}
               run: npm ci
 
             - name: Vérifier les licences
-              working-directory: ${{ matrix.service }}
+              working-directory: ${{ matrix.dir }}
               run: npx license-checker --onlyAllow "MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Python-2.0;Unlicense;0BSD;MPL-2.0"
 
     # ─── Validation Docker Compose ──────────────────────────────────────────────

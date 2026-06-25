@@ -5,13 +5,19 @@ RUN npm install -g npm@latest && npm cache clean --force
 
 WORKDIR /app
 
-COPY task-service/package*.json ./
+COPY package.json package-lock.json ./
+COPY auth-service/package.json ./auth-service/
+COPY project-service/package.json ./project-service/
+COPY task-service/package.json ./task-service/
+COPY notification-service/package.json ./notification-service/
+
 RUN npm ci
 
-COPY tsconfig.base.json /tsconfig.base.json
-COPY task-service/tsconfig.json ./tsconfig.json
-COPY task-service/src ./src
+COPY tsconfig.base.json ./
+COPY task-service/tsconfig.json ./task-service/
+COPY task-service/src ./task-service/src
 
+WORKDIR /app/task-service
 RUN npm run build
 
 ENV NODE_ENV=production
