@@ -1,2 +1,11 @@
 node_modules
 dist
+Dockerfile
+.env.*
+.git
+.gitignore
+tests
+.env
+test-results
+playwright-report
+

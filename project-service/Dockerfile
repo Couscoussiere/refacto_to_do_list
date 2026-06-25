@@ -4,12 +4,14 @@ RUN npm install -g npm@latest && npm cache clean --force
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY project-service/package*.json ./
 RUN npm ci
 
-COPY tsconfig.json ./
-COPY src ./src
-COPY sql ./sql
+COPY tsconfig.base.json /tsconfig.base.json
+COPY project-service/tsconfig.json ./tsconfig.json
+COPY project-service/src ./src
+
+COPY project-service/sql ./sql
 
 RUN npm run build
 

@@ -1,156 +1,161 @@
 services:
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 10s
-      timeout: 5s
-      retries: 15
-      start_period: 30s
-  nginx:
-   image: nginx:alpine
-   ports:
-     - "8080:80"
-   volumes:
-     - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-   depends_on:
-     - auth-service
-     - project-service
-     - task-service
-     - notification-service
+    rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+            - '5672:5672'
+            - '15672:15672'
+        healthcheck:
+            test: ['CMD', 'rabbitmq-diagnostics', 'check_port_connectivity']
+            interval: 10s
+            timeout: 5s
+            retries: 15
+            start_period: 30s
+    reverse-proxy:
+        image: nginx:alpine
+        ports:
+            - '8080:80'
+        volumes:
+            - ./reverse-proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+        depends_on:
+            - auth-service
+            - project-service
+            - task-service
+            - notification-service
 
-  frontend:
-    build:
-      context: ./frontend
-    ports:
-      - "5173:80"
-    depends_on:
-      - nginx
+    frontend:
+        build:
+          context: ./frontend
+          dockerfile: Dockerfile
+        ports:
+            - '5173:80'
+        depends_on:
+            - reverse-proxy
 
-  mysql-auth:
-    image: mysql:8.0
-    command: --default-authentication-plugin=mysql_native_password
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=authdb
-      - MYSQL_USER=auth_user
-      - MYSQL_PASSWORD=${MYSQL_AUTH_PASSWORD}
-    ports:
-      - "3307:3306"
-    volumes:
-      - mysql-auth-data:/var/lib/mysql
-      - ./auth-service/sql/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    mysql-auth:
+        image: mysql:8.0
+        command: --default-authentication-plugin=mysql_native_password
+        environment:
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - MYSQL_DATABASE=authdb
+            - MYSQL_USER=auth_user
+            - MYSQL_PASSWORD=${MYSQL_AUTH_PASSWORD}
+        ports:
+            - '3307:3306'
+        volumes:
+            - mysql-auth-data:/var/lib/mysql
+            - ./auth-service/sql/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
 
-  mysql-project:
-    image: mysql:8.0
-    command: --default-authentication-plugin=mysql_native_password
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=projectdb
-      - MYSQL_USER=project_user
-      - MYSQL_PASSWORD=${MYSQL_PROJECT_PASSWORD}
-    ports:
-      - "3308:3306"
-    volumes:
-      - mysql-project-data:/var/lib/mysql
-      - ./project-service/sql/migrations/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    mysql-project:
+        image: mysql:8.0
+        command: --default-authentication-plugin=mysql_native_password
+        environment:
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - MYSQL_DATABASE=projectdb
+            - MYSQL_USER=project_user
+            - MYSQL_PASSWORD=${MYSQL_PROJECT_PASSWORD}
+        ports:
+            - '3308:3306'
+        volumes:
+            - mysql-project-data:/var/lib/mysql
+            - ./project-service/sql/migrations/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
 
-  mysql-task:
-    image: mysql:8.0
-    command: --default-authentication-plugin=mysql_native_password
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=taskdb
-      - MYSQL_USER=task_user
-      - MYSQL_PASSWORD=${MYSQL_TASK_PASSWORD}
-    ports:
-      - "3309:3306"
-    volumes:
-      - mysql-task-data:/var/lib/mysql
-      - ./task-service/sql/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    mysql-task:
+        image: mysql:8.0
+        command: --default-authentication-plugin=mysql_native_password
+        environment:
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - MYSQL_DATABASE=taskdb
+            - MYSQL_USER=task_user
+            - MYSQL_PASSWORD=${MYSQL_TASK_PASSWORD}
+        ports:
+            - '3309:3306'
+        volumes:
+            - mysql-task-data:/var/lib/mysql
+            - ./task-service/sql/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
 
-  auth-service:
-    build:
-      context: ./auth-service
-    ports:
-      - "3000:3000"
-    environment:
-      - PORT=3000
-      - CORS_ORIGIN=${CORS_ORIGIN}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=1h
-      - DB_HOST=mysql-auth
-      - DB_USER=auth_user
-      - DB_PASSWORD=${MYSQL_AUTH_PASSWORD}
-      - DB_NAME=authdb
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mysql-auth:
-        condition: service_started
+    auth-service:
+        build:
+            context: .
+            dockerfile: auth-service/Dockerfile
+        ports:
+            - '3000:3000'
+        environment:
+            - PORT=3000
+            - CORS_ORIGIN=${CORS_ORIGIN}
+            - JWT_SECRET=${JWT_SECRET}
+            - JWT_EXPIRES_IN=1h
+            - DB_HOST=mysql-auth
+            - DB_USER=auth_user
+            - DB_PASSWORD=${MYSQL_AUTH_PASSWORD}
+            - DB_NAME=authdb
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+            mysql-auth:
+                condition: service_started
 
-  project-service:
-    build:
-      context: ./project-service
-    ports:
-      - "3001:3001"
-    environment:
-      - PORT=3001
-      - CORS_ORIGIN=${CORS_ORIGIN}
-      - AUTH_SERVICE_URL=http://auth-service:3000
-      - TASK_SERVICE_URL=http://task-service:3002
-      - RABBITMQ_URL=amqp://rabbitmq:5672
-      - DB_HOST=mysql-project
-      - DB_USER=project_user
-      - DB_PASSWORD=${MYSQL_PROJECT_PASSWORD}
-      - DB_NAME=projectdb
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      auth-service:
-        condition: service_started
-      mysql-project:
-        condition: service_started
+    project-service:
+        build:
+            context: .
+            dockerfile: project-service/Dockerfile
+        ports:
+            - '3001:3001'
+        environment:
+            - PORT=3001
+            - CORS_ORIGIN=${CORS_ORIGIN}
+            - AUTH_SERVICE_URL=http://auth-service:3000
+            - TASK_SERVICE_URL=http://task-service:3002
+            - RABBITMQ_URL=amqp://rabbitmq:5672
+            - DB_HOST=mysql-project
+            - DB_USER=project_user
+            - DB_PASSWORD=${MYSQL_PROJECT_PASSWORD}
+            - DB_NAME=projectdb
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+            auth-service:
+                condition: service_started
+            mysql-project:
+                condition: service_started
 
-  task-service:
-    build:
-      context: ./task-service
-    ports:
-      - "3002:3002"
-    environment:
-      - PORT=3002
-      - CORS_ORIGIN=${CORS_ORIGIN}
-      - PROJECT_SERVICE_URL=http://project-service:3001
-      - RABBITMQ_URL=amqp://rabbitmq:5672
-      - DB_HOST=mysql-task
-      - DB_USER=task_user
-      - DB_PASSWORD=${MYSQL_TASK_PASSWORD}
-      - DB_NAME=taskdb
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mysql-task:
-        condition: service_started
-      project-service:
-        condition: service_started
+    task-service:
+        build:
+            context: .
+            dockerfile: task-service/Dockerfile
+        ports:
+            - '3002:3002'
+        environment:
+            - PORT=3002
+            - CORS_ORIGIN=${CORS_ORIGIN}
+            - PROJECT_SERVICE_URL=http://project-service:3001
+            - RABBITMQ_URL=amqp://rabbitmq:5672
+            - DB_HOST=mysql-task
+            - DB_USER=task_user
+            - DB_PASSWORD=${MYSQL_TASK_PASSWORD}
+            - DB_NAME=taskdb
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+            mysql-task:
+                condition: service_started
+            project-service:
+                condition: service_started
 
-  notification-service:
-    build:
-      context: ./notification-service
-    ports:
-      - "3003:3003"
-    environment:
-      - PORT=3003
-      - CORS_ORIGIN=${CORS_ORIGIN}
-      - RABBITMQ_URL=amqp://rabbitmq:5672
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+    notification-service:
+        build:
+            context: .
+            dockerfile: notification-service/Dockerfile
+        ports:
+            - '3003:3003'
+        environment:
+            - PORT=3003
+            - CORS_ORIGIN=${CORS_ORIGIN}
+            - RABBITMQ_URL=amqp://rabbitmq:5672
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
 
 volumes:
-  mysql-auth-data:
-  mysql-project-data:
-  mysql-task-data:
+    mysql-auth-data:
+    mysql-project-data:
+    mysql-task-data:

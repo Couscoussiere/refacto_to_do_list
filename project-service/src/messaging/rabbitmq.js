@@ -1,0 +1,69 @@
+import { connect } from "amqplib";
+import { routingKeyForOutgoing } from "./events.js";
+const EXCHANGE = "events";
+const connectWithRetry = async (url, retries = 10, delayMs = 3000) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            return await connect(url);
+        }
+        catch (err) {
+            if (attempt === retries)
+                throw err;
+            console.log(`RabbitMQ not ready, retrying in ${delayMs}ms... (${attempt}/${retries})`);
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+    }
+    throw new Error("Could not connect to RabbitMQ after max retries");
+};
+export const connectRabbit = async () => {
+    const url = process.env.RABBITMQ_URL || "amqp://localhost:5672";
+    const connection = await connectWithRetry(url);
+    const channel = await connection.createChannel();
+    await channel.assertExchange(EXCHANGE, "topic", { durable: true });
+    const publish = (event) => {
+        const payload = Buffer.from(JSON.stringify(event));
+        channel.publish(EXCHANGE, routingKeyForOutgoing(event), payload, {
+            contentType: "application/json",
+            persistent: true,
+            type: event.type,
+            timestamp: Date.now(),
+        });
+    };
+    const close = async () => {
+        try {
+            await channel.close();
+        }
+        finally {
+            await connection.close();
+        }
+    };
+    return { connection, channel, publish, close };
+};
+export const safeJson = (msg) => {
+    try {
+        return JSON.parse(msg.content.toString("utf8"));
+    }
+    catch {
+        return null;
+    }
+};
+export const subscribe = async (params) => {
+    const { channel, routingKeys, onMessage } = params;
+    const { queue } = await channel.assertQueue("", { exclusive: true });
+    for (const key of routingKeys) {
+        await channel.bindQueue(queue, EXCHANGE, key);
+    }
+    await channel.consume(queue, async (msg) => {
+        if (!msg)
+            return;
+        try {
+            await onMessage(msg);
+            channel.ack(msg);
+        }
+        catch (error) {
+            console.error("project-service event handler error:", error);
+            channel.nack(msg, false, false);
+        }
+    });
+    return { queue };
+};

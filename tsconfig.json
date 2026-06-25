@@ -1,13 +1,10 @@
 {
-    "compilerOptions": {
-        "allowJs": true,
-        "outDir": "./dist",
-        "rootDir": "./",
-        "esModuleInterop": true,
-        "module": "commonjs",
-        "target": "ES2020",
-        "jsx": "react-jsx"
-    },
-    "include": ["**/*"],
-    "exclude": ["frontend"]
+  "files": [],
+  "references": [
+    { "path": "./auth-service" },
+    { "path": "./project-service" },
+    { "path": "./task-service" },
+    { "path": "./notification-service" },
+    { "path": "./frontend" }
+  ]
 }
