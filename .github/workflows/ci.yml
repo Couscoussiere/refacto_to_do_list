@@ -280,7 +280,7 @@ jobs:
 
             - name: Vérifier les licences
               working-directory: ${{ matrix.service }}
-              run: npx license-checker --onlyAllow "MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Python-2.0;Unlicense;0BSD"
+              run: npx license-checker --onlyAllow "MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Python-2.0;Unlicense;0BSD;MPL-2.0"
 
     # ─── Validation Docker Compose ──────────────────────────────────────────────
 
@@ -332,7 +332,8 @@ jobs:
             - name: Build ${{ matrix.service }}
               uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6
               with:
-                  context: ${{ matrix.service }}
+                  context: .
+                  file: ${{ matrix.service }}/Dockerfile
                   push: false
                   load: true
                   tags: ${{ matrix.service }}:pr-${{ github.event.pull_request.number }}
