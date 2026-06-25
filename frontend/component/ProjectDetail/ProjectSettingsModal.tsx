@@ -12,8 +12,14 @@ interface Props {
     onDeleted: () => void;
 }
 
+type ProjectSettingsForm = Omit<UpdateProjectPayload, 'startDate' | 'dueDate' | 'budget'> & {
+    startDate: string;
+    dueDate: string;
+    budget: string;
+};
+
 export default function ProjectSettingsModal({ project, onClose, onUpdated, onDeleted }: Props) {
-    const [form, setForm] = React.useState<UpdateProjectPayload & { startDate: string; dueDate: string; budget: string }>({
+    const [form, setForm] = React.useState<ProjectSettingsForm>({
         name: project.name,
         description: project.description ?? '',
         status: project.status,

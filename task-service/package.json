@@ -2,6 +2,7 @@
   "name": "task-service",
   "version": "1.0.0",
   "description": "service de gestion des taches",
+  "license": "ISC",
   "type": "module",
   "main": "index.js",
   "scripts": {

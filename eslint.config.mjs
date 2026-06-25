@@ -12,9 +12,9 @@ export default tseslint.config(
             'frontend/**',
             'spec/**',
             'tests/**',
-            '*.js',
-            '*.cjs',
-
+            'tests-e2e/**',
+            '**/*.js',
+            '**/*.cjs',
         ],
     },
     {

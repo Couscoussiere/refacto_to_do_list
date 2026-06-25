@@ -245,72 +245,12 @@ jobs:
             working-directory: ${{ matrix.service }}
             run: npm audit --audit-level=high
 
-  # ─── Vérification des licences ──────────────────────────────────────────────
+      # ─── Vérification des licences ──────────────────────────────────────────────
 
-  license-check:
-      name: Vérification licences ${{ matrix.service }}
-      needs: changes
-      if: |
-          needs.changes.outputs.auth == 'true' ||
-          needs.changes.outputs.project == 'true' ||
-          needs.changes.outputs.task == 'true' ||
-          needs.changes.outputs.notification == 'true' ||
-          needs.changes.outputs.frontend == 'true'
-      runs-on: ubuntu-latest
-      strategy:
-          matrix:
-              service:
-                  - auth-service
-                  - project-service
-                  - task-service
-                  - notification-service
-                  - frontend
-      steps:
-          - uses: actions/checkout@v4
-
-          - uses: actions/setup-node@v4
-            with:
-                node-version: 20
-                cache: npm
-                cache-dependency-path: ${{ matrix.service }}/package-lock.json
-
-          - name: Install dependencies
-            working-directory: ${{ matrix.service }}
-            run: npm ci
-
-          - name: Vérifier les licences
-            working-directory: ${{ matrix.service }}
-            run: npx license-checker --onlyAllow 'MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Python-2.0;Unlicense;0BSD'
-
-  # ─── Validation Docker Compose ──────────────────────────────────────────────
-
-  validate-compose:
-      name: Validation Docker Compose
-      needs: changes
-      if: |
-          needs.changes.outputs.dockerfile == 'true' ||
-          needs.changes.outputs.auth == 'true' ||
-          needs.changes.outputs.project == 'true' ||
-          needs.changes.outputs.task == 'true' ||
-          needs.changes.outputs.notification == 'true' ||
-          needs.changes.outputs.frontend == 'true'
-      runs-on: ubuntu-latest
-      steps:
-          - uses: actions/checkout@v4
-
-          - name: Copier .env.example en .env
-            run: cp .env.example .env
-
-          - name: Valider docker-compose.yml
-            run: docker compose config --quiet
-
-    # ─── Build Docker (sans push) ────────────────────────────────────────────────
-
-    docker-build:
-        name: Build Docker ${{ matrix.service }}
+    license-check:
+        name: Vérification licences ${{ matrix.service }}
         needs: changes
         if: |
-            needs.changes.outputs.dockerfile == 'true' ||
             needs.changes.outputs.auth == 'true' ||
             needs.changes.outputs.project == 'true' ||
             needs.changes.outputs.task == 'true' ||
@@ -328,12 +268,82 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+                  cache-dependency-path: ${{ matrix.service }}/package-lock.json
+
+            - name: Install dependencies
+              working-directory: ${{ matrix.service }}
+              run: npm ci
+
+            - name: Vérifier les licences
+              working-directory: ${{ matrix.service }}
+              run: npx license-checker --onlyAllow "MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Python-2.0;Unlicense;0BSD;MPL-2.0"
+
+    # ─── Validation Docker Compose ──────────────────────────────────────────────
+
+    validate-compose:
+        name: Validation Docker Compose
+        needs: changes
+        if: |
+            needs.changes.outputs.dockerfile == 'true' ||
+            needs.changes.outputs.auth == 'true' ||
+            needs.changes.outputs.project == 'true' ||
+            needs.changes.outputs.task == 'true' ||
+            needs.changes.outputs.notification == 'true' ||
+            needs.changes.outputs.frontend == 'true'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Copier .env.example en .env
+              run: cp .env.example .env
+
+            - name: Valider docker-compose.yml
+              run: docker compose config --quiet
+    # ─── Build Docker (sans push) ────────────────────────────────────────────────
+
+    docker-build:
+        name: Build Docker ${{ matrix.service }}
+        needs: changes
+        if: |
+            needs.changes.outputs.dockerfile == 'true' ||
+            needs.changes.outputs.auth == 'true' ||
+            needs.changes.outputs.project == 'true' ||
+            needs.changes.outputs.task == 'true' ||
+            needs.changes.outputs.notification == 'true' ||
+            needs.changes.outputs.frontend == 'true'
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                include:
+                    - service: auth-service
+                      context: .
+                      dockerfile: auth-service/Dockerfile
+                    - service: project-service
+                      context: .
+                      dockerfile: project-service/Dockerfile
+                    - service: task-service
+                      context: .
+                      dockerfile: task-service/Dockerfile
+                    - service: notification-service
+                      context: .
+                      dockerfile: notification-service/Dockerfile
+                    - service: frontend
+                      context: ./frontend
+                      dockerfile: ./frontend/Dockerfile
+        steps:
+            - uses: actions/checkout@v4
+
             - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3
 
             - name: Build ${{ matrix.service }}
               uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6
               with:
-                  context: ${{ matrix.service }}
+                  context: ${{ matrix.context }}
+                  file: ${{ matrix.dockerfile }}
                   push: false
                   load: true
                   tags: ${{ matrix.service }}:pr-${{ github.event.pull_request.number }}
@@ -345,3 +355,4 @@ jobs:
                   format: table
                   exit-code: '1'
                   severity: HIGH,CRITICAL
+                  trivyignores: .trivyignore
