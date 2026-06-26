@@ -40,7 +40,7 @@ describe("GET /tasks", () => {
 		await request(app).post("/v1/tasks").send({ ...TASK, projectId: 1 });
 		await request(app).post("/v1/tasks").send({ ...TASK, name: "Autre projet", projectId: 2 });
 
-		const res = await request(app).get("/tasks?projectId=1");
+		const res = await request(app).get("/v1/tasks?projectId=1");
 
 		expect(res.status).toBe(200);
 		expect(res.body.tasks).toHaveLength(1);
@@ -76,13 +76,13 @@ describe("GET /tasks/:id", () => {
 	});
 
 	it("tâche inexistante → 404", async () => {
-		const res = await request(app).get("/tasks/99999");
+		const res = await request(app).get("/v1/tasks/99999");
 
 		expect(res.status).toBe(404);
 	});
 
 	it("id invalide → 400", async () => {
-		const res = await request(app).get("/tasks/abc");
+		const res = await request(app).get("/v1/tasks/abc");
 
 		expect(res.status).toBe(400);
 	});
