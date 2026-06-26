@@ -53,6 +53,10 @@ jobs:
           tags: |
             ghcr.io/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ env.VERSION }}
             ghcr.io/${{ env.IMAGE_NAME }}/${{ matrix.service }}:latest
+          build-args: |
+            VERSION=${{ env.VERSION }}
+            GIT_SHA=${{ github.sha }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

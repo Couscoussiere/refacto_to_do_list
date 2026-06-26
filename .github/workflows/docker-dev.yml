@@ -59,5 +59,9 @@ jobs:
           tags: |
             ghcr.io/${{ env.IMAGE_NAME }}/${{ matrix.service }}:dev
             ghcr.io/${{ env.IMAGE_NAME }}/${{ matrix.service }}:sha-${{ github.sha }}
+          build-args: |
+            VERSION=dev
+            GIT_SHA=${{ github.sha }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
