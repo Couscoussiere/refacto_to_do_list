@@ -32,6 +32,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/task-service/package.json ./task-service/
 COPY --from=builder /app/task-service/dist ./task-service/dist
+COPY task-service/sql ./task-service/sql
 
 WORKDIR /app/task-service
 ENV NODE_ENV=production

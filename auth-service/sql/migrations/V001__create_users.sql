@@ -1,5 +1,3 @@
--- Auth Service schema (MySQL 8+)
-
 CREATE TABLE IF NOT EXISTS users (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   email VARCHAR(255) NOT NULL,

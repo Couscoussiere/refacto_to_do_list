@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { runMigrations } from "./migrate.js";
 import connectDB from "./config/bd.js";
 import { createApp } from "./app.js";
 import { connectRabbit } from "./messaging/rabbitmq.js";
@@ -6,6 +7,7 @@ import { createTasksRepository } from "./repository/tasksRepository.js";
 
 const port = process.env.PORT || 3002;
 
+await runMigrations();
 const rabbit = await connectRabbit();
 const db = connectDB();
 const repo = createTasksRepository(db);

@@ -10,6 +10,7 @@ services:
             timeout: 5s
             retries: 15
             start_period: 30s
+
     reverse-proxy:
         image: nginx:alpine
         ports:
@@ -43,7 +44,12 @@ services:
             - '3307:3306'
         volumes:
             - mysql-auth-data:/var/lib/mysql
-            - ./auth-service/sql/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 30s
 
     mysql-project:
         image: mysql:8.0
@@ -57,7 +63,12 @@ services:
             - '3308:3306'
         volumes:
             - mysql-project-data:/var/lib/mysql
-            - ./project-service/sql/migrations/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 30s
 
     mysql-task:
         image: mysql:8.0
@@ -71,7 +82,12 @@ services:
             - '3309:3306'
         volumes:
             - mysql-task-data:/var/lib/mysql
-            - ./task-service/sql/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 30s
 
     auth-service:
         build:
@@ -93,7 +109,7 @@ services:
             rabbitmq:
                 condition: service_healthy
             mysql-auth:
-                condition: service_started
+                condition: service_healthy
 
     project-service:
         build:
@@ -114,9 +130,9 @@ services:
         depends_on:
             rabbitmq:
                 condition: service_healthy
-            auth-service:
-                condition: service_started
             mysql-project:
+                condition: service_healthy
+            auth-service:
                 condition: service_started
 
     task-service:
@@ -138,7 +154,7 @@ services:
             rabbitmq:
                 condition: service_healthy
             mysql-task:
-                condition: service_started
+                condition: service_healthy
             project-service:
                 condition: service_started
 

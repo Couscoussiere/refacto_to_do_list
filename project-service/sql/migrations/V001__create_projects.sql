@@ -1,5 +1,3 @@
--- Project Service schema (MySQL 8+)
-
 CREATE TABLE IF NOT EXISTS projects (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   owner_user_id BIGINT UNSIGNED NOT NULL,
@@ -17,8 +15,6 @@ CREATE TABLE IF NOT EXISTS projects (
   INDEX idx_projects_due_date (due_date)
 );
 
--- tasks are owned by a separate task-service.
--- project-service only stores associations to external task ids.
 CREATE TABLE IF NOT EXISTS project_tasks (
   project_id BIGINT UNSIGNED NOT NULL,
   task_id BIGINT UNSIGNED NOT NULL,
