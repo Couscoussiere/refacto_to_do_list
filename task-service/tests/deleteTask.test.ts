@@ -44,13 +44,13 @@ describe("DELETE /tasks/:id", () => {
 	});
 
 	it("tâche inexistante → 404", async () => {
-		const res = await request(app).delete("/tasks/99999");
+		const res = await request(app).delete("/v1/tasks/99999");
 
 		expect(res.status).toBe(404);
 	});
 
 	it("id invalide → 400", async () => {
-		const res = await request(app).delete("/tasks/abc");
+		const res = await request(app).delete("/v1/tasks/abc");
 
 		expect(res.status).toBe(400);
 	});

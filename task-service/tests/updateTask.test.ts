@@ -70,13 +70,13 @@ describe("PUT /tasks/:id", () => {
 	});
 
 	it("tâche inexistante → 404", async () => {
-		const res = await request(app).put("/tasks/99999").send({ name: "Test" });
+		const res = await request(app).put("/v1/tasks/99999").send({ name: "Test" });
 
 		expect(res.status).toBe(404);
 	});
 
 	it("id invalide → 400", async () => {
-		const res = await request(app).put("/tasks/abc").send({ name: "Test" });
+		const res = await request(app).put("/v1/tasks/abc").send({ name: "Test" });
 
 		expect(res.status).toBe(400);
 	});
