@@ -8,7 +8,7 @@ const PROJECT = {
 	dueDate: "2030-12-31",
 };
 
-describe("POST /projects/create", () => {
+describe("POST /v1/projects/create", () => {
 	let app: ReturnType<typeof createTestApp>["app"];
 
 	beforeEach(() => {
@@ -16,7 +16,7 @@ describe("POST /projects/create", () => {
 	});
 
 	it("création avec données minimales → 201 + projet", async () => {
-		const res = await request(app).post("/projects/create").send(PROJECT);
+		const res = await request(app).post("/v1/projects/create").send(PROJECT);
 
 		expect(res.status).toBe(201);
 		expect(res.body.project).toMatchObject({
@@ -28,7 +28,7 @@ describe("POST /projects/create", () => {
 	});
 
 	it("création avec tous les champs → 201", async () => {
-		const res = await request(app).post("/projects/create").send({
+		const res = await request(app).post("/v1/projects/create").send({
 			...PROJECT,
 			description: "Une description",
 			budget: 5000,
@@ -45,7 +45,7 @@ describe("POST /projects/create", () => {
 	});
 
 	it("name manquant → 400", async () => {
-		const res = await request(app).post("/projects/create").send({
+		const res = await request(app).post("/v1/projects/create").send({
 			startDate: PROJECT.startDate,
 			dueDate: PROJECT.dueDate,
 		});
@@ -54,14 +54,14 @@ describe("POST /projects/create", () => {
 	});
 
 	it("nom en double pour le même user → 409", async () => {
-		await request(app).post("/projects/create").send(PROJECT);
-		const res = await request(app).post("/projects/create").send(PROJECT);
+		await request(app).post("/v1/projects/create").send(PROJECT);
+		const res = await request(app).post("/v1/projects/create").send(PROJECT);
 
 		expect(res.status).toBe(409);
 	});
 
 	it("startDate > dueDate → 400", async () => {
-		const res = await request(app).post("/projects/create").send({
+		const res = await request(app).post("/v1/projects/create").send({
 			name: PROJECT.name,
 			startDate: "2030-12-31",
 			dueDate: "2030-01-01",
@@ -71,7 +71,7 @@ describe("POST /projects/create", () => {
 	});
 
 	it("date invalide → 400", async () => {
-		const res = await request(app).post("/projects/create").send({
+		const res = await request(app).post("/v1/projects/create").send({
 			name: PROJECT.name,
 			startDate: "pas-une-date",
 			dueDate: "2030-12-31",
@@ -81,7 +81,7 @@ describe("POST /projects/create", () => {
 	});
 
 	it("status invalide → ignoré (utilise NOT_STARTED par défaut)", async () => {
-		const res = await request(app).post("/projects/create").send({
+		const res = await request(app).post("/v1/projects/create").send({
 			...PROJECT,
 			status: "INVALIDE",
 		});

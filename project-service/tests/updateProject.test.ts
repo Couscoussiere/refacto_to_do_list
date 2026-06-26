@@ -8,18 +8,18 @@ const PROJECT = {
 	dueDate: "2030-12-31",
 };
 
-describe("PUT /projects/:id", () => {
+describe("PUT /v1/projects/:id", () => {
 	let app: ReturnType<typeof createTestApp>["app"];
 	let projectId: number;
 
 	beforeEach(async () => {
 		({ app } = createTestApp());
-		const res = await request(app).post("/projects/create").send(PROJECT);
+		const res = await request(app).post("/v1/projects/create").send(PROJECT);
 		projectId = res.body.project.id as number;
 	});
 
 	it("mise à jour du nom → 200", async () => {
-		const res = await request(app).put(`/projects/${projectId}`).send({
+		const res = await request(app).put(`/v1/projects/${projectId}`).send({
 			name: "Nouveau nom",
 			startDate: PROJECT.startDate,
 			dueDate: PROJECT.dueDate,
@@ -30,7 +30,7 @@ describe("PUT /projects/:id", () => {
 	});
 
 	it("mise à jour du statut → 200", async () => {
-		const res = await request(app).put(`/projects/${projectId}`).send({
+		const res = await request(app).put(`/v1/projects/${projectId}`).send({
 			status: "IN_PROGRESS",
 			startDate: PROJECT.startDate,
 			dueDate: PROJECT.dueDate,
@@ -41,7 +41,7 @@ describe("PUT /projects/:id", () => {
 	});
 
 	it("mise à jour du budget → 200", async () => {
-		const res = await request(app).put(`/projects/${projectId}`).send({
+		const res = await request(app).put(`/v1/projects/${projectId}`).send({
 			budget: 9999,
 			startDate: PROJECT.startDate,
 			dueDate: PROJECT.dueDate,
@@ -52,7 +52,7 @@ describe("PUT /projects/:id", () => {
 	});
 
 	it("projet inexistant → 404", async () => {
-		const res = await request(app).put("/projects/99999").send({
+		const res = await request(app).put("/v1/projects/99999").send({
 			name: "Test",
 			startDate: PROJECT.startDate,
 			dueDate: PROJECT.dueDate,
@@ -62,13 +62,13 @@ describe("PUT /projects/:id", () => {
 	});
 
 	it("id invalide → 400", async () => {
-		const res = await request(app).put("/projects/abc").send({ name: "Test" });
+		const res = await request(app).put("/v1/projects/abc").send({ name: "Test" });
 
 		expect(res.status).toBe(400);
 	});
 
 	it("startDate > dueDate → 400", async () => {
-		const res = await request(app).put(`/projects/${projectId}`).send({
+		const res = await request(app).put(`/v1/projects/${projectId}`).send({
 			startDate: "2030-12-31",
 			dueDate: "2030-01-01",
 		});

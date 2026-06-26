@@ -16,8 +16,8 @@ describe("requireAuth middleware", () => {
 
 	beforeEach(async () => {
 		({ app } = createTestApp());
-		await request(app).post("/auth/register").send(USER);
-		const res = await request(app).post("/auth/login").send({
+		await request(app).post("/v1/auth/register").send(USER);
+		const res = await request(app).post("/v1/auth/login").send({
 			email: USER.email,
 			password: USER.password,
 		});
@@ -25,20 +25,20 @@ describe("requireAuth middleware", () => {
 	});
 
 	it("token Bearer valide → appelle next() et retourne 200", async () => {
-		const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${validToken}`);
+		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${validToken}`);
 
 		expect(res.status).toBe(200);
 	});
 
 	it("header Authorization absent → 401", async () => {
-		const res = await request(app).get("/auth/me");
+		const res = await request(app).get("/v1/auth/me");
 
 		expect(res.status).toBe(401);
 		expect(res.body.message).toBe("Missing Authorization header");
 	});
 
 	it("schéma non Bearer → 401", async () => {
-		const res = await request(app).get("/auth/me").set("Authorization", `Basic ${validToken}`);
+		const res = await request(app).get("/v1/auth/me").set("Authorization", `Basic ${validToken}`);
 
 		expect(res.status).toBe(401);
 		expect(res.body.message).toBe("Invalid Authorization header");
@@ -50,14 +50,14 @@ describe("requireAuth middleware", () => {
 			process.env.JWT_SECRET as string
 		);
 
-		const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${expiredToken}`);
+		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${expiredToken}`);
 
 		expect(res.status).toBe(401);
 		expect(res.body.message).toBe("Invalid token");
 	});
 
 	it("token malformé → 401", async () => {
-		const res = await request(app).get("/auth/me").set("Authorization", "Bearer pas.un.token.valide");
+		const res = await request(app).get("/v1/auth/me").set("Authorization", "Bearer pas.un.token.valide");
 
 		expect(res.status).toBe(401);
 		expect(res.body.message).toBe("Invalid token");
@@ -66,14 +66,14 @@ describe("requireAuth middleware", () => {
 	it("token sans sub → 401", async () => {
 		const tokenSansSub = jwt.sign({ email: USER.email }, process.env.JWT_SECRET as string);
 
-		const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${tokenSansSub}`);
+		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${tokenSansSub}`);
 
 		expect(res.status).toBe(401);
 		expect(res.body.message).toBe("Invalid token");
 	});
 
 	it("token valide → req.auth contient userId et email", async () => {
-		const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${validToken}`);
+		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${validToken}`);
 
 		expect(res.status).toBe(200);
 		expect(res.body.user.email).toBe(USER.email);

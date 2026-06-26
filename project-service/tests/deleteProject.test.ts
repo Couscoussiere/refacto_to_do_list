@@ -20,13 +20,13 @@ const mockFetch = (tasks: unknown[]) => {
 	);
 };
 
-describe("DELETE /projects/:id", () => {
+describe("DELETE /v1/projects/:id", () => {
 	let app: ReturnType<typeof createTestApp>["app"];
 	let projectId: number;
 
 	beforeEach(async () => {
 		({ app } = createTestApp());
-		const res = await request(app).post("/projects/create").send(PROJECT);
+		const res = await request(app).post("/v1/projects/create").send(PROJECT);
 		projectId = res.body.project.id as number;
 	});
 
@@ -37,7 +37,7 @@ describe("DELETE /projects/:id", () => {
 	it("projet sans tâches → 204", async () => {
 		mockFetch([]);
 
-		const res = await request(app).delete(`/projects/${projectId}`);
+		const res = await request(app).delete(`/v1/projects/${projectId}`);
 
 		expect(res.status).toBe(204);
 	});
@@ -45,7 +45,7 @@ describe("DELETE /projects/:id", () => {
 	it("toutes les tâches DONE → 204", async () => {
 		mockFetch([{ status: "DONE" }, { status: "DONE" }]);
 
-		const res = await request(app).delete(`/projects/${projectId}`);
+		const res = await request(app).delete(`/v1/projects/${projectId}`);
 
 		expect(res.status).toBe(204);
 	});
@@ -53,7 +53,7 @@ describe("DELETE /projects/:id", () => {
 	it("tâches non terminées sans force → 409", async () => {
 		mockFetch([{ status: "TODO", name: "Tâche 1" }, { status: "DONE" }]);
 
-		const res = await request(app).delete(`/projects/${projectId}`);
+		const res = await request(app).delete(`/v1/projects/${projectId}`);
 
 		expect(res.status).toBe(409);
 	});
@@ -61,7 +61,7 @@ describe("DELETE /projects/:id", () => {
 	it("tâches non terminées avec force=true → 204", async () => {
 		mockFetch([{ status: "TODO", name: "Tâche 1" }]);
 
-		const res = await request(app).delete(`/projects/${projectId}?force=true`);
+		const res = await request(app).delete(`/v1/projects/${projectId}?force=true`);
 
 		expect(res.status).toBe(204);
 	});
@@ -69,13 +69,13 @@ describe("DELETE /projects/:id", () => {
 	it("projet inexistant → 404", async () => {
 		mockFetch([]);
 
-		const res = await request(app).delete("/projects/99999");
+		const res = await request(app).delete("/v1/projects/99999");
 
 		expect(res.status).toBe(404);
 	});
 
 	it("id invalide → 400", async () => {
-		const res = await request(app).delete("/projects/abc");
+		const res = await request(app).delete("/v1/projects/abc");
 
 		expect(res.status).toBe(400);
 	});
@@ -83,8 +83,8 @@ describe("DELETE /projects/:id", () => {
 	it("projet supprimé n'est plus accessible → 404", async () => {
 		mockFetch([]);
 
-		await request(app).delete(`/projects/${projectId}`);
-		const res = await request(app).get(`/projects/${projectId}`);
+		await request(app).delete(`/v1/projects/${projectId}`);
+		const res = await request(app).get(`/v1/projects/${projectId}`);
 
 		expect(res.status).toBe(404);
 	});
