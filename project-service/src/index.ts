@@ -1,7 +1,10 @@
+import { runMigrations } from "./migrate.js";
 import connectDB from "./config/bd.js";
 import { createApp } from "./app.js";
 import { connectRabbit } from "./messaging/rabbitmq.js";
 import { startTaskEventsConsumer } from "./messaging/taskEventsConsumer.js";
+
+await runMigrations();
 
 const port = process.env.PORT || 3001;
 const db = connectDB();

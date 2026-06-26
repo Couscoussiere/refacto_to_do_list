@@ -1,5 +1,8 @@
+import { runMigrations } from "./migrate.js";
 import connectDB from "./config/bd.js";
 import { createApp } from "./app.js";
+
+await runMigrations();
 
 const port = process.env.PORT || 3000;
 const db = connectDB();
