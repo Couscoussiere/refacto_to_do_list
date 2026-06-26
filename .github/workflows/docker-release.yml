@@ -1,0 +1,106 @@
+name: Docker Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-push:
+    name: Release ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: auth-service
+            context: .
+          - service: project-service
+            context: .
+          - service: task-service
+            context: .
+          - service: notification-service
+            context: .
+          - service: frontend
+            context: ./frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Set image name
+        run: echo "IMAGE_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3
+
+      - name: Login GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9  # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push versioned image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.service }}/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ghcr.io/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ env.VERSION }}
+            ghcr.io/${{ env.IMAGE_NAME }}/${{ matrix.service }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  publish-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Set image name
+        run: echo "IMAGE_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Generate compatibility manifest
+        run: |
+          cat > compatibility.json << EOF
+          {
+            "stack": "${{ env.VERSION }}",
+            "api": "v1",
+            "releasedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "services": {
+              "auth-service":          "${{ env.VERSION }}",
+              "project-service":       "${{ env.VERSION }}",
+              "task-service":          "${{ env.VERSION }}",
+              "notification-service":  "${{ env.VERSION }}",
+              "frontend":              "${{ env.VERSION }}"
+            },
+            "images": {
+              "auth-service":          "ghcr.io/${{ env.IMAGE_NAME }}/auth-service:${{ env.VERSION }}",
+              "project-service":       "ghcr.io/${{ env.IMAGE_NAME }}/project-service:${{ env.VERSION }}",
+              "task-service":          "ghcr.io/${{ env.IMAGE_NAME }}/task-service:${{ env.VERSION }}",
+              "notification-service":  "ghcr.io/${{ env.IMAGE_NAME }}/notification-service:${{ env.VERSION }}",
+              "frontend":              "ghcr.io/${{ env.IMAGE_NAME }}/frontend:${{ env.VERSION }}"
+            }
+          }
+          EOF
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "Release ${{ github.ref_name }}" \
+            --generate-notes \
+            compatibility.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

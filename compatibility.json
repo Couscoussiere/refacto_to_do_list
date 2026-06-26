@@ -1,0 +1,23 @@
+{
+  "latestStack": "1.0.0",
+  "stacks": {
+    "1.0.0": {
+      "api": "v1",
+      "releasedAt": "2026-06-26T00:00:00Z",
+      "services": {
+        "auth-service":         "1.0.0",
+        "project-service":      "1.0.0",
+        "task-service":         "1.0.0",
+        "notification-service": "1.0.0",
+        "frontend":             "1.0.0"
+      },
+      "images": {
+        "auth-service":         "ghcr.io/couscoussiere/refacto_to_do_list/auth-service:1.0.0",
+        "project-service":      "ghcr.io/couscoussiere/refacto_to_do_list/project-service:1.0.0",
+        "task-service":         "ghcr.io/couscoussiere/refacto_to_do_list/task-service:1.0.0",
+        "notification-service": "ghcr.io/couscoussiere/refacto_to_do_list/notification-service:1.0.0",
+        "frontend":             "ghcr.io/couscoussiere/refacto_to_do_list/frontend:1.0.0"
+      }
+    }
+  }
+}
