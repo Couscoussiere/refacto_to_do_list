@@ -8,7 +8,7 @@ const PROJECT = {
 	dueDate: "2030-12-31",
 };
 
-describe("GET /projects/:id", () => {
+describe("GET /v1/projects/:id", () => {
 	let app: ReturnType<typeof createTestApp>["app"];
 
 	beforeEach(() => {
@@ -16,23 +16,23 @@ describe("GET /projects/:id", () => {
 	});
 
 	it("projet existant → 200 + projet", async () => {
-		const created = await request(app).post("/projects/create").send(PROJECT);
+		const created = await request(app).post("/v1/projects/create").send(PROJECT);
 		const id = created.body.project.id as number;
 
-		const res = await request(app).get(`/projects/${id}`);
+		const res = await request(app).get(`/v1/projects/${id}`);
 
 		expect(res.status).toBe(200);
 		expect(res.body.project).toMatchObject({ id, name: PROJECT.name });
 	});
 
 	it("projet inexistant → 404", async () => {
-		const res = await request(app).get("/projects/99999");
+		const res = await request(app).get("/v1/projects/99999");
 
 		expect(res.status).toBe(404);
 	});
 
 	it("id invalide → 400", async () => {
-		const res = await request(app).get("/projects/abc");
+		const res = await request(app).get("/v1/projects/abc");
 
 		expect(res.status).toBe(400);
 	});
@@ -46,17 +46,17 @@ describe("GET /projects", () => {
 	});
 
 	it("retourne tous les projets du user connecté → 200", async () => {
-		await request(app).post("/projects/create").send(PROJECT);
-		await request(app).post("/projects/create").send({ ...PROJECT, name: "Projet 2" });
+		await request(app).post("/v1/projects/create").send(PROJECT);
+		await request(app).post("/v1/projects/create").send({ ...PROJECT, name: "Projet 2" });
 
-		const res = await request(app).get("/projects");
+		const res = await request(app).get("/v1/projects");
 
 		expect(res.status).toBe(200);
 		expect(res.body.projects).toHaveLength(2);
 	});
 
 	it("retourne liste vide si aucun projet → 200 avec []", async () => {
-		const res = await request(app).get("/projects");
+		const res = await request(app).get("/v1/projects");
 
 		expect(res.status).toBe(200);
 		expect(res.body.projects).toHaveLength(0);

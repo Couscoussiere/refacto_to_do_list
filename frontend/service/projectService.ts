@@ -6,7 +6,7 @@ import type { UpdateProjectPayload } from '../interface/Project/UpdateProjectPay
 
 export type { Project, ProjectStatus, CreateProjectPayload, UpdateProjectPayload };
 const API_BASE = "http://localhost:8080";
-const PROJECT_BASE = `${API_BASE}/projects/`;
+const PROJECT_BASE = `${API_BASE}/v1/projects/`;
 
 export async function getAllProjects(): Promise<Project[]> {
     const res = await fetchWithAuth(PROJECT_BASE);

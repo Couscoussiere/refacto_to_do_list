@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import http from "http";
 import { WebSocketServer } from "ws";
+import { openapiSpec, swaggerHtml } from "./openapi.js";
 
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
 	.split(",")
@@ -16,6 +17,11 @@ export const createApp = () => {
 	app.get("/health", (_req, res) => {
 		res.status(200).json({ status: "ok" });
 	});
+
+	if (process.env.NODE_ENV !== "production") {
+		app.get("/v1/docs", (_req, res) => res.send(swaggerHtml("/v1/openapi.json")));
+		app.get("/v1/openapi.json", (_req, res) => res.json(openapiSpec));
+	}
 
 	const httpServer = http.createServer(app);
 	const wss = new WebSocketServer({ server: httpServer });

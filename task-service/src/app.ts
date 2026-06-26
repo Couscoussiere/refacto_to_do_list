@@ -3,6 +3,7 @@ import cors from "cors";
 import type { RabbitClient } from "./messaging/rabbitmq.js";
 import type { TasksRepository } from "./repository/tasksRepository.js";
 import { createTasksRouter } from "./routes/tasks.js";
+import { openapiSpec, swaggerHtml } from "./openapi.js";
 
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
   .split(",")
@@ -19,7 +20,12 @@ export const createApp = (repo: TasksRepository, rabbit: RabbitClient) => {
     res.status(200).json({ status: "ok" });
   });
 
-  app.use("/tasks", createTasksRouter({ rabbit, repo }));
+  app.use("/v1/tasks", createTasksRouter({ rabbit, repo }));
+
+  if (process.env.NODE_ENV !== "production") {
+    app.get("/v1/docs", (_req, res) => res.send(swaggerHtml("/v1/openapi.json")));
+    app.get("/v1/openapi.json", (_req, res) => res.json(openapiSpec));
+  }
 
   app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (err instanceof SyntaxError) {

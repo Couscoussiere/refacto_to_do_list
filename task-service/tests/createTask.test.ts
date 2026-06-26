@@ -34,7 +34,7 @@ describe("POST /tasks", () => {
 	});
 
 	it("création avec données minimales → 201 + tâche", async () => {
-		const res = await request(app).post("/tasks").send(TASK);
+		const res = await request(app).post("/v1/tasks").send(TASK);
 
 		expect(res.status).toBe(201);
 		expect(res.body.task).toMatchObject({
@@ -47,7 +47,7 @@ describe("POST /tasks", () => {
 	});
 
 	it("création avec tous les champs → 201", async () => {
-		const res = await request(app).post("/tasks").send({
+		const res = await request(app).post("/v1/tasks").send({
 			...TASK,
 			description: "Une description",
 			priority: "HIGH",
@@ -63,43 +63,43 @@ describe("POST /tasks", () => {
 	});
 
 	it("projectId manquant → 400", async () => {
-		const res = await request(app).post("/tasks").send({ userId: 1, name: "Test" });
+		const res = await request(app).post("/v1/tasks").send({ userId: 1, name: "Test" });
 
 		expect(res.status).toBe(400);
 	});
 
 	it("userId manquant → 400", async () => {
-		const res = await request(app).post("/tasks").send({ projectId: 1, name: "Test" });
+		const res = await request(app).post("/v1/tasks").send({ projectId: 1, name: "Test" });
 
 		expect(res.status).toBe(400);
 	});
 
 	it("name manquant → 400", async () => {
-		const res = await request(app).post("/tasks").send({ projectId: 1, userId: 1 });
+		const res = await request(app).post("/v1/tasks").send({ projectId: 1, userId: 1 });
 
 		expect(res.status).toBe(400);
 	});
 
 	it("priority invalide → 400", async () => {
-		const res = await request(app).post("/tasks").send({ ...TASK, priority: "ULTRA" });
+		const res = await request(app).post("/v1/tasks").send({ ...TASK, priority: "ULTRA" });
 
 		expect(res.status).toBe(400);
 	});
 
 	it("status invalide → 400", async () => {
-		const res = await request(app).post("/tasks").send({ ...TASK, status: "BLOQUEE" });
+		const res = await request(app).post("/v1/tasks").send({ ...TASK, status: "BLOQUEE" });
 
 		expect(res.status).toBe(400);
 	});
 
 	it("dueDate invalide → 400", async () => {
-		const res = await request(app).post("/tasks").send({ ...TASK, dueDate: "pas-une-date" });
+		const res = await request(app).post("/v1/tasks").send({ ...TASK, dueDate: "pas-une-date" });
 
 		expect(res.status).toBe(400);
 	});
 
 	it("publie l'événement TaskCreated", async () => {
-		await request(app).post("/tasks").send(TASK);
+		await request(app).post("/v1/tasks").send(TASK);
 
 		expect(rabbit.publishEvent).toHaveBeenCalledWith(
 			expect.objectContaining({ type: "TaskCreated" }),

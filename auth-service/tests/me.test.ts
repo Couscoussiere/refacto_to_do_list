@@ -10,14 +10,14 @@ const USER = {
 	lastName: "Dick",
 };
 
-describe("GET /auth/me", () => {
+describe("GET /v1/auth/me", () => {
 	let app: ReturnType<typeof createTestApp>["app"];
 	let token: string;
 
 	beforeEach(async () => {
 		({ app } = createTestApp());
-		await request(app).post("/auth/register").send(USER);
-		const loginRes = await request(app).post("/auth/login").send({
+		await request(app).post("/v1/auth/register").send(USER);
+		const loginRes = await request(app).post("/v1/auth/login").send({
 			email: USER.email,
 			password: USER.password,
 		});
@@ -25,7 +25,7 @@ describe("GET /auth/me", () => {
 	});
 
 	it("token valide → 200 + user", async () => {
-		const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${token}`);
+		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${token}`);
 
 		expect(res.status).toBe(200);
 		expect(res.body.user).toMatchObject({
@@ -36,7 +36,7 @@ describe("GET /auth/me", () => {
 	});
 
 	it("sans token → 401", async () => {
-		const res = await request(app).get("/auth/me");
+		const res = await request(app).get("/v1/auth/me");
 
 		expect(res.status).toBe(401);
 	});
@@ -47,13 +47,13 @@ describe("GET /auth/me", () => {
 			process.env.JWT_SECRET as string
 		);
 
-		const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${expiredToken}`);
+		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${expiredToken}`);
 
 		expect(res.status).toBe(401);
 	});
 
 	it("token malformé → 401", async () => {
-		const res = await request(app).get("/auth/me").set("Authorization", "Bearer token-invalide");
+		const res = await request(app).get("/v1/auth/me").set("Authorization", "Bearer token-invalide");
 
 		expect(res.status).toBe(401);
 	});
@@ -61,7 +61,7 @@ describe("GET /auth/me", () => {
 	it("userId dans le token inexistant en base → 404", async () => {
 		const fakeToken = jwt.sign({ sub: "99999", email: "fantome@test.com" }, process.env.JWT_SECRET as string);
 
-		const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${fakeToken}`);
+		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${fakeToken}`);
 
 		expect(res.status).toBe(404);
 	});

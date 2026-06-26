@@ -8,7 +8,7 @@ import type { UpdateTaskPayload } from '../interface/Task/UpdateTaskPayload';
 export type { Task, TaskStatus, TaskPriority, CreateTaskPayload, UpdateTaskPayload };
 
 const API_BASE = "http://localhost:8080";
-const TASK_BASE = `${API_BASE}/tasks/`;
+const TASK_BASE = `${API_BASE}/v1/tasks/`;
 
 export async function getTasksByProject(projectId: number): Promise<Task[]> {
     const res = await fetchWithAuth(`${TASK_BASE}?projectId=${projectId}`);

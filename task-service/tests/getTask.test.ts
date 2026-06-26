@@ -27,20 +27,20 @@ describe("GET /tasks", () => {
 	afterEach(() => vi.unstubAllGlobals());
 
 	it("retourne toutes les tâches → 200", async () => {
-		await request(app).post("/tasks").send(TASK);
-		await request(app).post("/tasks").send({ ...TASK, name: "Tâche 2" });
+		await request(app).post("/v1/tasks").send(TASK);
+		await request(app).post("/v1/tasks").send({ ...TASK, name: "Tâche 2" });
 
-		const res = await request(app).get("/tasks");
+		const res = await request(app).get("/v1/tasks");
 
 		expect(res.status).toBe(200);
 		expect(res.body.tasks).toHaveLength(2);
 	});
 
 	it("filtre par projectId → 200", async () => {
-		await request(app).post("/tasks").send({ ...TASK, projectId: 1 });
-		await request(app).post("/tasks").send({ ...TASK, name: "Autre projet", projectId: 2 });
+		await request(app).post("/v1/tasks").send({ ...TASK, projectId: 1 });
+		await request(app).post("/v1/tasks").send({ ...TASK, name: "Autre projet", projectId: 2 });
 
-		const res = await request(app).get("/tasks?projectId=1");
+		const res = await request(app).get("/v1/tasks?projectId=1");
 
 		expect(res.status).toBe(200);
 		expect(res.body.tasks).toHaveLength(1);
@@ -48,7 +48,7 @@ describe("GET /tasks", () => {
 	});
 
 	it("liste vide → 200 avec []", async () => {
-		const res = await request(app).get("/tasks");
+		const res = await request(app).get("/v1/tasks");
 
 		expect(res.status).toBe(200);
 		expect(res.body.tasks).toHaveLength(0);
@@ -66,23 +66,23 @@ describe("GET /tasks/:id", () => {
 	afterEach(() => vi.unstubAllGlobals());
 
 	it("tâche existante → 200 + tâche", async () => {
-		const created = await request(app).post("/tasks").send(TASK);
+		const created = await request(app).post("/v1/tasks").send(TASK);
 		const id = created.body.task.id as number;
 
-		const res = await request(app).get(`/tasks/${id}`);
+		const res = await request(app).get(`/v1/tasks/${id}`);
 
 		expect(res.status).toBe(200);
 		expect(res.body.task).toMatchObject({ id, name: TASK.name });
 	});
 
 	it("tâche inexistante → 404", async () => {
-		const res = await request(app).get("/tasks/99999");
+		const res = await request(app).get("/v1/tasks/99999");
 
 		expect(res.status).toBe(404);
 	});
 
 	it("id invalide → 400", async () => {
-		const res = await request(app).get("/tasks/abc");
+		const res = await request(app).get("/v1/tasks/abc");
 
 		expect(res.status).toBe(400);
 	});
