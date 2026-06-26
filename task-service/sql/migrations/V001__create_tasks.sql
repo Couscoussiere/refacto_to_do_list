@@ -1,6 +1,3 @@
--- Task Service schema (MySQL 8+)
-
-
 CREATE TABLE IF NOT EXISTS tasks (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   project_id BIGINT UNSIGNED NOT NULL,

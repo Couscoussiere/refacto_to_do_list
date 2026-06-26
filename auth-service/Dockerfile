@@ -32,6 +32,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/auth-service/package.json ./auth-service/
 COPY --from=builder /app/auth-service/dist ./auth-service/dist
+COPY auth-service/sql ./auth-service/sql
 
 WORKDIR /app/auth-service
 ENV NODE_ENV=production
