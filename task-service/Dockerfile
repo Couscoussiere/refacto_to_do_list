@@ -33,8 +33,10 @@ LABEL org.opencontainers.image.title="task-service" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${GIT_SHA}" \
       org.opencontainers.image.created="${BUILD_DATE}" \
-      org.opencontainers.image.licenses="MIT"
-
+      org.opencontainers.image.licenses="MIT" \
+      com.refactotodolist.provides.api-version="v1" \
+      com.refactotodolist.requires.project-service=">=1.0.0 <2.0.0"
+      
 RUN apk update && apk upgrade --no-cache && \
     rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
