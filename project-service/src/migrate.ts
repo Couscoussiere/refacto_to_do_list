@@ -5,6 +5,43 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+export type MigrationConn = {
+  execute: (sql: string, params?: unknown[]) => Promise<[unknown, unknown]>;
+  query: <T>(sql: string, params?: unknown[]) => Promise<[T, unknown]>;
+  end: () => Promise<void>;
+};
+
+export async function applyMigrations(conn: MigrationConn, migrationsDir: string): Promise<void> {
+  await conn.execute(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      version VARCHAR(255) NOT NULL,
+      applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (version)
+    )
+  `);
+
+  const files = (await fs.readdir(migrationsDir))
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
+
+  for (const file of files) {
+    const [rows] = await conn.query<{ version: string }[]>(
+      "SELECT version FROM schema_migrations WHERE version = ?",
+      [file]
+    );
+    if (rows.length > 0) continue;
+
+    const sql = await fs.readFile(path.join(migrationsDir, file), "utf8");
+    const statements = sql.split(";").map((s) => s.trim()).filter(Boolean);
+    for (const stmt of statements) {
+      await conn.execute(stmt);
+    }
+
+    await conn.execute("INSERT INTO schema_migrations (version) VALUES (?)", [file]);
+    console.log(`[migrate] Applied: ${file}`);
+  }
+}
+
 export async function runMigrations(): Promise<void> {
   const conn = await mysql.createConnection({
     host: process.env.DB_HOST || "localhost",
@@ -15,38 +52,7 @@ export async function runMigrations(): Promise<void> {
   });
 
   try {
-    await conn.execute(`
-      CREATE TABLE IF NOT EXISTS schema_migrations (
-        version VARCHAR(255) NOT NULL,
-        applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (version)
-      )
-    `);
-
-    const migrationsDir = path.join(__dirname, "../sql/migrations");
-    const files = (await fs.readdir(migrationsDir))
-      .filter((f) => f.endsWith(".sql"))
-      .sort();
-
-    for (const file of files) {
-      const [rows] = await conn.query<mysql.RowDataPacket[]>(
-        "SELECT version FROM schema_migrations WHERE version = ?",
-        [file]
-      );
-      if (rows.length > 0) continue;
-
-      const sql = await fs.readFile(path.join(migrationsDir, file), "utf8");
-      const statements = sql.split(";").map((s) => s.trim()).filter(Boolean);
-      for (const stmt of statements) {
-        await conn.execute(stmt);
-      }
-
-      await conn.execute(
-        "INSERT INTO schema_migrations (version) VALUES (?)",
-        [file]
-      );
-      console.log(`[migrate] Applied: ${file}`);
-    }
+    await applyMigrations(conn as unknown as MigrationConn, path.join(__dirname, "../sql/migrations"));
   } finally {
     await conn.end();
   }
