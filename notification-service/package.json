@@ -20,6 +20,9 @@
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.7",
-    "@types/ws": "^8.18.1"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9.3"
   }
 }

@@ -24,7 +24,11 @@ LABEL org.opencontainers.image.title="frontend" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${GIT_SHA}" \
       org.opencontainers.image.created="${BUILD_DATE}" \
-      org.opencontainers.image.licenses="MIT"
+      org.opencontainers.image.licenses="MIT" \
+      com.refactotodolist.requires.auth-service=">=1.0.0 <2.0.0" \
+      com.refactotodolist.requires.project-service=">=1.0.0 <2.0.0" \
+      com.refactotodolist.requires.task-service=">=1.0.0 <2.0.0" \
+      com.refactotodolist.requires.notification-service=">=1.0.0 <2.0.0"
 
 RUN apk update && apk upgrade --no-cache
 
