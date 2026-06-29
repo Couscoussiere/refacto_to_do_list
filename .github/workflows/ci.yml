@@ -20,6 +20,7 @@ jobs:
             frontend: ${{ steps.filter.outputs.frontend }}
             root: ${{ steps.filter.outputs.root }}
             dockerfile: ${{ steps.filter.outputs.dockerfile }}
+            manifest: ${{ steps.filter.outputs.manifest }}
         steps:
             - uses: actions/checkout@v4
 
@@ -45,6 +46,9 @@ jobs:
                         - '.dependency-cruiser.cjs'
                       dockerfile:
                         - '**/Dockerfile'
+                      manifest:
+                        - 'compatibility.json'
+                        - '*/package.json'
 
     # ─── Tests par service (uniquement si modifié) ───────────────────────────────
 
@@ -366,3 +370,46 @@ jobs:
                   exit-code: '1'
                   severity: HIGH,CRITICAL
                   trivyignores: .trivyignore
+
+    # ─── Vérification du manifest de compatibilité ──────────────────────────────
+
+    verify-manifest:
+        name: Vérification compatibility.json
+        needs: changes
+        if: needs.changes.outputs.manifest == 'true'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Vérifier la cohérence du manifest
+              run: |
+                LATEST=$(jq -r '.latestStack' compatibility.json)
+
+                if ! jq -e --arg v "$LATEST" '.stacks[$v]' compatibility.json > /dev/null; then
+                  echo "FAIL: latestStack '$LATEST' introuvable dans .stacks"
+                  exit 1
+                fi
+
+                FAILED=0
+                for svc in auth-service project-service task-service notification-service frontend; do
+                  PKG_VERSION=$(jq -r .version "$svc/package.json")
+                  MANIFEST_VERSION=$(jq -r --arg s "$svc" --arg v "$LATEST" '.stacks[$v].services[$s]' compatibility.json)
+                  IMAGE=$(jq -r --arg s "$svc" --arg v "$LATEST" '.stacks[$v].images[$s]' compatibility.json)
+                  IMAGE_TAG="${IMAGE##*:}"
+
+                  if [ "$MANIFEST_VERSION" != "$PKG_VERSION" ]; then
+                    echo "MISMATCH services[$svc]: manifest=$MANIFEST_VERSION, package.json=$PKG_VERSION"
+                    FAILED=1
+                  else
+                    echo "OK services[$svc] = $PKG_VERSION"
+                  fi
+
+                  if [ "$IMAGE_TAG" != "$PKG_VERSION" ]; then
+                    echo "MISMATCH images[$svc]: tag=$IMAGE_TAG, package.json=$PKG_VERSION"
+                    FAILED=1
+                  else
+                    echo "OK images[$svc] tag = $IMAGE_TAG"
+                  fi
+                done
+
+                exit $FAILED
