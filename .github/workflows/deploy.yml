@@ -13,8 +13,6 @@ jobs:
         runs-on: ubuntu-latest
         environment: integration
         if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
-        permissions:
-            packages: read
 
         steps:
             - uses: actions/checkout@v4
@@ -44,18 +42,14 @@ jobs:
 
             - name: Déployer sur la VM
               uses: appleboy/ssh-action@v1.0.3
-              env:
-                  GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  GHCR_USER: ${{ github.actor }}
               with:
                   host: ${{ secrets.SSH_HOST }}
                   username: ${{ secrets.SSH_USER }}
                   password: ${{ secrets.SSH_PASSWORD }}
-                  envs: GHCR_TOKEN,GHCR_USER
                   script: |
-                      cd ~/app
+                      sudo usermod -aG docker azureadmin
 
-                      echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+                      cd ~/app
 
                       sudo docker compose -f docker-compose.deploy.yml pull
 
