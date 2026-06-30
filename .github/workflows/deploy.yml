@@ -38,7 +38,7 @@ jobs:
               with:
                   host: ${{ secrets.SSH_HOST }}
                   username: ${{ secrets.SSH_USER }}
-                  key: ${{ secrets.SSH_PRIVATE_KEY_INT }}
+                  password: ${{ secrets.SSH_PASSWORD }}
                   source: '.env,docker-compose.deploy.yml,reverse-proxy/nginx.conf'
                   target: ~/app
 
@@ -50,7 +50,7 @@ jobs:
               with:
                   host: ${{ secrets.SSH_HOST }}
                   username: ${{ secrets.SSH_USER }}
-                  key: ${{ secrets.SSH_PRIVATE_KEY_INT }}
+                  password: ${{ secrets.SSH_PASSWORD }}
                   envs: GHCR_TOKEN,GHCR_USER
                   script: |
                       cd ~/app
