@@ -222,7 +222,7 @@ export const deleteProjectController = (db: Connection) => {
                 : taskServiceUrlRaw;
 
             const response = await fetch(
-                `${taskServiceUrl}/tasks?projectId=${id}`,
+                `${taskServiceUrl}/v1/tasks?projectId=${id}`,
                 {
                     headers: { accept: 'application/json' },
                 },

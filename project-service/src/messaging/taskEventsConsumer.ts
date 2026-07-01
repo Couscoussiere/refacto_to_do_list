@@ -23,7 +23,7 @@ const getTaskServiceUrl = (): string => {
 };
 
 const fetchTasksForProject = async (projectId: number): Promise<TaskFromApi[]> => {
-  const url = `${getTaskServiceUrl()}/tasks?projectId=${projectId}`;
+  const url = `${getTaskServiceUrl()}/v1/tasks?projectId=${projectId}`;
   const response = await fetch(url, { headers: { accept: "application/json" } });
   if (!response.ok) {
     const text = await response.text().catch(() => "");

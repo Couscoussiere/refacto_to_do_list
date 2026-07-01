@@ -9,7 +9,7 @@
 
 /* ── Header ──────────────────────────────────────────────────────── */
 .header {
-    background-color: #191970;
+    background-color: green;
     padding: 0 48px;
     height: 64px;
     display: flex;
