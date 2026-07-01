@@ -45,7 +45,7 @@ export const requireAuthViaAuthService = async (
 	const timeout = setTimeout(() => abortController.abort(), 5000);
 
 	try {
-		const url = `${getAuthServiceUrl()}/auth/me`;
+		const url = `${getAuthServiceUrl()}/v1/auth/me`;
 		const response = await fetch(url, {
 			method: "GET",
 			headers: {

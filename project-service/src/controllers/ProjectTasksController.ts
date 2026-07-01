@@ -46,7 +46,7 @@ export const createProjectTasksController = (db: Connection) => {
         return;
       }
 
-      const response = await fetch(`${getTaskServiceUrl()}/tasks`, {
+      const response = await fetch(`${getTaskServiceUrl()}/v1/tasks`, {
         method: "POST",
         headers: {
           accept: "application/json",
@@ -90,7 +90,7 @@ export const createProjectTasksController = (db: Connection) => {
         return;
       }
 
-      const response = await fetch(`${getTaskServiceUrl()}/tasks?projectId=${projectId}`, {
+      const response = await fetch(`${getTaskServiceUrl()}/v1/tasks?projectId=${projectId}`, {
         headers: { accept: "application/json" },
       });
 

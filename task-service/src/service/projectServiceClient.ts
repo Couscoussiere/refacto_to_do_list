@@ -9,7 +9,7 @@ const getProjectServiceUrl = (): string => {
 };
 
 export const fetchProjectStatus = async (projectId: number, authToken: string): Promise<string | null> => {
-  const url = `${getProjectServiceUrl()}/projects/${projectId}`;
+  const url = `${getProjectServiceUrl()}/v1/projects/${projectId}`;
   const res = await fetch(url, {
     headers: {
       accept: "application/json",
@@ -38,7 +38,7 @@ export const fetchProjectDates = async (
   projectId: number,
   authToken: string
 ): Promise<ProjectDates | null> => {
-  const url = `${getProjectServiceUrl()}/projects/${projectId}`;
+  const url = `${getProjectServiceUrl()}/v1/projects/${projectId}`;
   const res = await fetch(url, {
     headers: {
       accept: "application/json",
