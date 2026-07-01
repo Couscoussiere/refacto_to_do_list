@@ -58,6 +58,10 @@ jobs:
 
                       sudo docker compose -f docker-compose.deploy.yml up -d --remove-orphans
 
+                      # reverse-proxy met en cache les IP des autres services au démarrage ;
+                      # on le recrée systématiquement pour qu'il reparte avec des IP à jour.
+                      sudo docker compose -f docker-compose.deploy.yml up -d --force-recreate reverse-proxy
+
                       sudo docker image prune -f
 
                       echo "--- Statut des conteneurs ---"
@@ -112,6 +116,10 @@ jobs:
                       sudo docker compose -f docker-compose.deploy.yml pull
 
                       sudo docker compose -f docker-compose.deploy.yml up -d --remove-orphans
+
+                      # reverse-proxy met en cache les IP des autres services au démarrage ;
+                      # on le recrée systématiquement pour qu'il reparte avec des IP à jour.
+                      sudo docker compose -f docker-compose.deploy.yml up -d --force-recreate reverse-proxy
 
                       sudo docker image prune -f
 
