@@ -16,7 +16,7 @@ export interface Notification {
     projectId?: number;
 }
 
-const WS_URL = 'ws://localhost:8080/v1/notifications/ws';
+const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/v1/notifications/ws`;
 const AUTO_DISMISS_MS = 5000;
 
 let notifCounter = 0;
