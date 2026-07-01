@@ -2,9 +2,8 @@ name: Deploy
 
 on:
     workflow_run:
-        workflows: ['Docker Build Dev']
+        workflows: ['Docker Build Dev', 'Docker Build & Push']
         types: [completed]
-        branches: [dev]
     workflow_dispatch:
 
 jobs:
@@ -12,12 +11,16 @@ jobs:
         name: Déploiement Intégration
         runs-on: ubuntu-latest
         environment: integration
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+        if: |
+            github.event_name == 'workflow_dispatch' ||
+            (github.event_name == 'workflow_run' &&
+             github.event.workflow_run.name == 'Docker Build Dev' &&
+             github.event.workflow_run.conclusion == 'success')
 
         steps:
             - uses: actions/checkout@v4
               with:
-                  ref: ${{ github.event.workflow_run.head_sha }}
+                  ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
             - name: Créer le fichier .env
               run: |
@@ -64,12 +67,15 @@ jobs:
         name: Déploiement Production
         runs-on: ubuntu-latest
         environment: production
-        needs: deploy-integration
+        if: |
+            github.event_name == 'workflow_run' &&
+            github.event.workflow_run.name == 'Docker Build & Push' &&
+            github.event.workflow_run.conclusion == 'success'
 
         steps:
             - uses: actions/checkout@v4
               with:
-                  ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+                  ref: ${{ github.event.workflow_run.head_sha }}
 
             - name: Créer le fichier .env
               run: |
@@ -80,7 +86,7 @@ jobs:
                   MYSQL_TASK_PASSWORD=${{ secrets.MYSQL_TASK_PASSWORD }}
                   JWT_SECRET=${{ secrets.JWT_SECRET }}
                   CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
-                  IMAGE_TAG=dev
+                  IMAGE_TAG=latest
                   ENVEOF
 
             - name: Copier les fichiers sur la VM
