@@ -59,3 +59,55 @@ jobs:
 
                       echo "--- Statut des conteneurs ---"
                       sudo docker compose -f docker-compose.deploy.yml ps
+
+    deploy-production:
+        name: Déploiement Production
+        runs-on: ubuntu-latest
+        environment: production
+        needs: deploy-integration
+
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+            - name: Créer le fichier .env
+              run: |
+                  cat > .env << 'ENVEOF'
+                  MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+                  MYSQL_AUTH_PASSWORD=${{ secrets.MYSQL_AUTH_PASSWORD }}
+                  MYSQL_PROJECT_PASSWORD=${{ secrets.MYSQL_PROJECT_PASSWORD }}
+                  MYSQL_TASK_PASSWORD=${{ secrets.MYSQL_TASK_PASSWORD }}
+                  JWT_SECRET=${{ secrets.JWT_SECRET }}
+                  CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+                  IMAGE_TAG=dev
+                  ENVEOF
+
+            - name: Copier les fichiers sur la VM
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USER }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY_PROD }}
+                  source: '.env,docker-compose.deploy.yml,reverse-proxy/nginx.conf'
+                  target: ~/app
+
+            - name: Déployer sur la VM
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USER }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY_PROD }}
+                  script: |
+                      sudo usermod -aG docker azureadmin
+
+                      cd ~/app
+
+                      sudo docker compose -f docker-compose.deploy.yml pull
+
+                      sudo docker compose -f docker-compose.deploy.yml up -d --remove-orphans
+
+                      sudo docker image prune -f
+
+                      echo "--- Statut des conteneurs ---"
+                      sudo docker compose -f docker-compose.deploy.yml ps
