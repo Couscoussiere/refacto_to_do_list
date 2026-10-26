@@ -390,9 +390,18 @@ jobs:
                   exit 1
                 fi
 
+                # auth-service est en Java : sa version est dans pom.xml, pas dans package.json
+                service_version() {
+                  if [ -f "$1/pom.xml" ]; then
+                    python3 -c 'import sys, xml.etree.ElementTree as E; print(E.parse(sys.argv[1]).getroot().find("{http://maven.apache.org/POM/4.0.0}version").text)' "$1/pom.xml"
+                  else
+                    jq -r .version "$1/package.json"
+                  fi
+                }
+
                 FAILED=0
                 for svc in auth-service project-service task-service notification-service frontend; do
-                  PKG_VERSION=$(jq -r .version "$svc/package.json")
+                  PKG_VERSION=$(service_version "$svc")
                   MANIFEST_VERSION=$(jq -r --arg s "$svc" --arg v "$LATEST" '.stacks[$v].services[$s]' compatibility.json)
                   IMAGE=$(jq -r --arg s "$svc" --arg v "$LATEST" '.stacks[$v].images[$s]' compatibility.json)
                   IMAGE_TAG="${IMAGE##*:}"

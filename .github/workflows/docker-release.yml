@@ -7,22 +7,31 @@ on:
 
 jobs:
   verify-versions:
-    name: Verify tag matches package.json versions
+    name: Verify tag matches service versions
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check all package.json versions match tag
+      - name: Check all service versions match tag
         run: |
+          # auth-service est en Java : sa version est dans pom.xml, pas dans package.json
+          service_version() {
+            if [ -f "$1/pom.xml" ]; then
+              python3 -c 'import sys, xml.etree.ElementTree as E; print(E.parse(sys.argv[1]).getroot().find("{http://maven.apache.org/POM/4.0.0}version").text)' "$1/pom.xml"
+            else
+              jq -r .version "$1/package.json"
+            fi
+          }
+
           TAG_VERSION="${GITHUB_REF_NAME#v}"
           FAILED=0
-          for pkg in auth-service/package.json project-service/package.json task-service/package.json notification-service/package.json frontend/package.json; do
-            PKG_VERSION=$(jq -r .version "$pkg")
-            if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-              echo "MISMATCH: $pkg has version $PKG_VERSION but tag is v$TAG_VERSION"
+          for svc in auth-service project-service task-service notification-service frontend; do
+            SVC_VERSION=$(service_version "$svc")
+            if [ "$SVC_VERSION" != "$TAG_VERSION" ]; then
+              echo "MISMATCH: $svc has version $SVC_VERSION but tag is v$TAG_VERSION"
               FAILED=1
             else
-              echo "OK: $pkg = $PKG_VERSION"
+              echo "OK: $svc = $SVC_VERSION"
             fi
           done
           exit $FAILED
