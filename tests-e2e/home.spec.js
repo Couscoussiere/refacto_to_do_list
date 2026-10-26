@@ -13,7 +13,7 @@ test.describe('Page Home', () => {
 
     test.beforeEach(async ({ page }) => {
         // Mocker l'API projets avant le chargement de la page
-        await page.route('http://localhost:8080/projects/**', route =>
+        await page.route('**/v1/projects/**', route =>
             route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ projects: FAKE_PROJECTS }) })
         );
 

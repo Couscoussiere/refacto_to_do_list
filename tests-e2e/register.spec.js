@@ -52,8 +52,8 @@ test.describe("Page Register", () => {
                 }),
             })
         );
-        await page.route('**/projects', route =>
-            route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+        await page.route('**/v1/projects/**', route =>
+            route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ projects: [] }) })
         );
 
         await page.locator('#firstName').fill('Jean');
