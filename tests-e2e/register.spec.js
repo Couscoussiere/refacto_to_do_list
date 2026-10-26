@@ -4,8 +4,7 @@ import { test, expect } from '@playwright/test';
 test.describe("Page Register", () => {
 
     test.beforeEach(async ({ page }) => {
-        await page.goto('/');
-        await page.getByText("S'inscrire").click();
+        await page.goto('/register');
         await expect(page.getByRole('heading', { name: 'Créer un compte' })).toBeVisible();
     });
 

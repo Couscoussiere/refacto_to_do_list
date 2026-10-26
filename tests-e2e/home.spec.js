@@ -23,7 +23,7 @@ test.describe('Page Home', () => {
             localStorage.setItem('user', JSON.stringify(user));
             localStorage.setItem('token', token);
         }, { user: FAKE_USER, token: FAKE_TOKEN });
-        await page.reload();
+        await page.goto('/projects');
 
         await expect(page.getByRole('heading', { name: 'Mes projets' })).toBeVisible();
     });

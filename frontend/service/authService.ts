@@ -57,6 +57,23 @@ export function saveToken(token: string): void {
     localStorage.setItem('token', token);
 }
 
+// Lit le claim `exp` du JWT (sans vérifier la signature : c'est le rôle du back).
+function isTokenExpired(token: string): boolean {
+    try {
+        const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        const { exp } = JSON.parse(atob(payload));
+        return typeof exp === 'number' && exp * 1000 <= Date.now();
+    } catch {
+        return false;
+    }
+}
+
 export function isAuthenticated(): boolean {
-    return getToken() !== null;
+    const token = getToken();
+    if (token === null) return false;
+    if (isTokenExpired(token)) {
+        logout();
+        return false;
+    }
+    return true;
 }

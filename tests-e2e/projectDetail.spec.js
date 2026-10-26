@@ -28,7 +28,7 @@ test.describe('Page ProjectDetail', () => {
             localStorage.setItem('user', JSON.stringify(user));
             localStorage.setItem('token', token);
         }, { user: FAKE_USER, token: FAKE_TOKEN });
-        await page.reload();
+        await page.goto('/projects');
 
         // Naviguer vers le détail du projet
         await expect(page.getByText('Projet Alpha')).toBeVisible();

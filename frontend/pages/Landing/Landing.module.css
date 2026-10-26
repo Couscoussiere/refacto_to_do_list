@@ -1,0 +1,190 @@
+/* ── Page ─────────────────────────────────────────────────────────── */
+.page {
+    min-height: 100vh;
+    background-color: #191970;
+    color: #ECEFF1;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Header ──────────────────────────────────────────────────────── */
+.header {
+    padding: 0 48px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brand {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.nav {
+    display: flex;
+    gap: 12px;
+}
+
+.ghostBtn,
+.primaryBtn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.ghostBtn {
+    color: rgba(236, 239, 241, 0.85);
+    border: 1.5px solid rgba(236, 239, 241, 0.35);
+}
+
+.ghostBtn:hover {
+    color: #ECEFF1;
+    border-color: rgba(236, 239, 241, 0.7);
+}
+
+.primaryBtn {
+    color: #191970;
+    background-color: #ECEFF1;
+    border: 1.5px solid #ECEFF1;
+}
+
+.primaryBtn:hover {
+    color: #191970;
+    background-color: #ffffff;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────── */
+.hero {
+    flex: 1;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 80px 48px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.headline {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 3.6rem;
+    font-weight: 600;
+    line-height: 1.1;
+    color: #ECEFF1;
+    margin: 0;
+}
+
+.tagline {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: rgba(236, 239, 241, 0.65);
+    max-width: 480px;
+    margin: 0;
+}
+
+.cta {
+    padding: 14px 28px;
+    border-radius: 10px;
+    background-color: #ECEFF1;
+    color: #191970;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.cta:hover {
+    background-color: #ffffff;
+    color: #191970;
+}
+
+.features {
+    margin-top: 56px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.feature {
+    padding: 24px;
+    border-radius: 12px;
+    background-color: rgba(236, 239, 241, 0.06);
+    border: 1px solid rgba(236, 239, 241, 0.12);
+}
+
+.featureIcon {
+    display: inline-flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background-color: rgba(236, 239, 241, 0.12);
+    margin-bottom: 12px;
+}
+
+.featureTitle {
+    font-size: 1.1rem;
+    color: #ECEFF1;
+    margin: 0 0 6px;
+}
+
+.featureText {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: rgba(236, 239, 241, 0.6);
+    margin: 0;
+}
+
+.footer {
+    padding: 24px 48px;
+    font-size: 0.8rem;
+    color: rgba(236, 239, 241, 0.4);
+}
+
+@media (max-width: 768px) {
+    .header,
+    .hero,
+    .footer {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .headline {
+        font-size: 2.4rem;
+    }
+
+    .features {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Animation de sortie (vers login / inscription) ────────────── */
+.leaving .hero > *,
+.leaving .nav,
+.leaving .footer {
+    animation: leaveUp 0.35s cubic-bezier(0.55, 0, 1, 0.45) both;
+}
+
+.leaving .hero > :nth-child(2) { animation-delay: 0.03s; }
+.leaving .hero > :nth-child(3) { animation-delay: 0.06s; }
+.leaving .hero > :nth-child(4) { animation-delay: 0.09s; }
+
+@keyframes leaveUp {
+    to { opacity: 0; transform: translateY(-24px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .leaving .hero > *,
+    .leaving .nav,
+    .leaving .footer {
+        animation: none;
+    }
+}

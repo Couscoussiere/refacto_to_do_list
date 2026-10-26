@@ -14,6 +14,13 @@ export async function getAllProjects(): Promise<Project[]> {
     return data.projects;
 }
 
+export async function getProject(id: number): Promise<Project> {
+    const res = await fetchWithAuth(`${PROJECT_BASE}${id}`);
+    if (!res.ok) throw new Error('Projet introuvable');
+    const data = await res.json();
+    return data.project;
+}
+
 export async function updateProject(id: number, payload: UpdateProjectPayload): Promise<Project> {
     const res = await fetchWithAuth(`${PROJECT_BASE}${id}`, {
         method: 'PUT',
