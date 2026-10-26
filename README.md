@@ -19,25 +19,23 @@ La méthode la plus simple pour démarrer l'ensemble de la stack.
 docker compose up --build
 ```
 
-Cela démarre :
-| Service | URL |
+L'application est accessible sur **http://localhost:8080** (reverse-proxy nginx), seul point d'entrée exposé :
+
+| Chemin | Service |
 |---|---|
-| Frontend (React) | http://localhost:5173 | 
+| `/` | Frontend (React) |
+| `/v1/auth/` | Auth Service (Java / Spring Boot) |
+| `/v1/projects/` | Project Service |
+| `/v1/tasks/` | Task Service |
+| `/v1/notifications/` | Notification Service (WebSocket) |
 
-| Nginx (reverse proxy) | http://localhost:8080 |
+Les backends, les bases MySQL et RabbitMQ sont sur un réseau Docker interne (`backend`, `internal: true`) et ne publient aucun port : ils ne sont pas joignables depuis l'extérieur.
 
-| Auth Service | http://localhost:3000 |
+Pour le développement local (frontend en `npm run frontend:dev`, Swagger, curl…), la surcharge `docker-compose.debug.yml` ré-expose les backends sur `127.0.0.1:3000-3003` :
 
-| Project Service | http://localhost:3001 |
-
-| Task Service | http://localhost:3002 |
-
-| Notification Service | http://localhost:3003 |
-
-| RabbitMQ Management | http://localhost:15672 |
-
-
-> Identifiants RabbitMQ par défaut : `guest` / `guest`
+```bash
+docker compose -f docker-compose.yml -f docker-compose.debug.yml up --build
+```
 
 Pour disposer d'un compte **admin**, renseigner `ADMIN_EMAIL` et `ADMIN_PASSWORD` dans le `.env` racine : l'auth-service crée ce compte au démarrage (ou promeut le compte existant avec cet email). Les comptes créés via l'inscription sont `standard`.
 

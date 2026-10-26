@@ -1,15 +1,14 @@
 services:
     rabbitmq:
         image: rabbitmq:3-management
-        ports:
-            - '5672:5672'
-            - '15672:15672'
         healthcheck:
             test: ['CMD', 'rabbitmq-diagnostics', 'check_port_connectivity']
             interval: 10s
             timeout: 5s
             retries: 15
             start_period: 30s
+        networks:
+            - backend
 
     reverse-proxy:
         image: nginx:1.30-alpine
@@ -22,15 +21,18 @@ services:
             - project-service
             - task-service
             - notification-service
+        networks:
+            - public
+            - backend
 
     frontend:
         build:
           context: ./frontend
           dockerfile: Dockerfile
-        ports:
-            - '5173:80'
         depends_on:
             - reverse-proxy
+        networks:
+            - backend
 
     mysql-auth:
         image: mysql:8.0
@@ -40,8 +42,6 @@ services:
             - MYSQL_DATABASE=authdb
             - MYSQL_USER=auth_user
             - MYSQL_PASSWORD=${MYSQL_AUTH_PASSWORD}
-        ports:
-            - '3307:3306'
         volumes:
             - mysql-auth-data:/var/lib/mysql
         healthcheck:
@@ -50,6 +50,8 @@ services:
             timeout: 5s
             retries: 10
             start_period: 30s
+        networks:
+            - backend
 
     mysql-project:
         image: mysql:8.0
@@ -59,8 +61,6 @@ services:
             - MYSQL_DATABASE=projectdb
             - MYSQL_USER=project_user
             - MYSQL_PASSWORD=${MYSQL_PROJECT_PASSWORD}
-        ports:
-            - '3308:3306'
         volumes:
             - mysql-project-data:/var/lib/mysql
         healthcheck:
@@ -69,6 +69,8 @@ services:
             timeout: 5s
             retries: 10
             start_period: 30s
+        networks:
+            - backend
 
     mysql-task:
         image: mysql:8.0
@@ -78,8 +80,6 @@ services:
             - MYSQL_DATABASE=taskdb
             - MYSQL_USER=task_user
             - MYSQL_PASSWORD=${MYSQL_TASK_PASSWORD}
-        ports:
-            - '3309:3306'
         volumes:
             - mysql-task-data:/var/lib/mysql
         healthcheck:
@@ -88,12 +88,12 @@ services:
             timeout: 5s
             retries: 10
             start_period: 30s
+        networks:
+            - backend
 
     auth-service:
         build:
             context: ./auth-service
-        ports:
-            - '3000:3000'
         environment:
             - PORT=3000
             - CORS_ORIGIN=${CORS_ORIGIN}
@@ -109,13 +109,13 @@ services:
         depends_on:
             mysql-auth:
                 condition: service_healthy
+        networks:
+            - backend
 
     project-service:
         build:
             context: .
             dockerfile: project-service/Dockerfile
-        ports:
-            - '3001:3001'
         environment:
             - PORT=3001
             - CORS_ORIGIN=${CORS_ORIGIN}
@@ -133,13 +133,13 @@ services:
                 condition: service_healthy
             auth-service:
                 condition: service_started
+        networks:
+            - backend
 
     task-service:
         build:
             context: .
             dockerfile: task-service/Dockerfile
-        ports:
-            - '3002:3002'
         environment:
             - PORT=3002
             - CORS_ORIGIN=${CORS_ORIGIN}
@@ -156,13 +156,13 @@ services:
                 condition: service_healthy
             project-service:
                 condition: service_started
+        networks:
+            - backend
 
     notification-service:
         build:
             context: .
             dockerfile: notification-service/Dockerfile
-        ports:
-            - '3003:3003'
         environment:
             - PORT=3003
             - CORS_ORIGIN=${CORS_ORIGIN}
@@ -170,6 +170,15 @@ services:
         depends_on:
             rabbitmq:
                 condition: service_healthy
+        networks:
+            - backend
+
+networks:
+    # Seul réseau relié à l'extérieur : uniquement le reverse-proxy
+    public:
+    # Backends, bases et RabbitMQ : aucun accès depuis/vers l'extérieur
+    backend:
+        internal: true
 
 volumes:
     mysql-auth-data:
