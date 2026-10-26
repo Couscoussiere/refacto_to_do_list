@@ -1,4 +1,5 @@
 import { fetchWithAuth } from '../utils/fetchWithAuth';
+import { getErrorMessage, readJson } from '../utils/http';
 import type { Project } from '../interface/Project/Project';
 import type { ProjectStatus } from '../interface/Project/ProjectStatus';
 import type { CreateProjectPayload } from '../interface/Project/CreateProjectPayload';
@@ -10,7 +11,7 @@ const PROJECT_BASE = '/v1/projects/';
 export async function getAllProjects(): Promise<Project[]> {
     const res = await fetchWithAuth(PROJECT_BASE);
     if (!res.ok) throw new Error('Erreur lors du chargement des projets');
-    const data = await res.json();
+    const data = await readJson(res);
     return data.projects;
 }
 
@@ -20,18 +21,16 @@ export async function updateProject(id: number, payload: UpdateProjectPayload): 
         body: JSON.stringify(payload),
     });
     if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message ?? 'Erreur lors de la mise à jour du projet');
+        throw new Error(await getErrorMessage(res, 'Erreur lors de la mise à jour du projet'));
     }
-    const data = await res.json();
+    const data = await readJson(res);
     return data.project;
 }
 
 export async function deleteProject(id: number): Promise<void> {
     const res = await fetchWithAuth(`${PROJECT_BASE}${id}`, { method: 'DELETE' });
     if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message ?? 'Erreur lors de la suppression du projet');
+        throw new Error(await getErrorMessage(res, 'Erreur lors de la suppression du projet'));
     }
 }
 
@@ -41,9 +40,8 @@ export async function createProject(payload: CreateProjectPayload): Promise<Proj
         body: JSON.stringify(payload),
     });
     if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message ?? 'Erreur lors de la création du projet');
+        throw new Error(await getErrorMessage(res, 'Erreur lors de la création du projet'));
     }
-    const data = await res.json();
+    const data = await readJson(res);
     return data.project;
 }

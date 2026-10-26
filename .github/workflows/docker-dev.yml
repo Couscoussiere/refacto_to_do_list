@@ -17,7 +17,7 @@ jobs:
        matrix:
         include:
           - service: auth-service
-            context: .
+            context: ./auth-service
             dockerfile: ./auth-service/Dockerfile
           - service: project-service
             context: .

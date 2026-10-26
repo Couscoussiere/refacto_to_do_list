@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 
-// Même mécanisme que la version Node (table schema_migrations, fichiers VXXX__*.sql)
-// pour rester compatible avec une base déjà migrée par l'ancien service.
+// Migrations SQL maison (table schema_migrations, fichiers VXXX__*.sql)
+// appliquées une seule fois chacune, dans l'ordre des noms de fichiers.
 @Component
 public class Migrator {
 

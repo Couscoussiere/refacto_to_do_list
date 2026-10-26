@@ -40,8 +40,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - service: auth-service
-            path: auth-service
           - service: project-service
             path: project-service
           - service: task-service
@@ -71,6 +69,32 @@ jobs:
         with:
           name: nightly-coverage-${{ matrix.service }}
           path: ${{ matrix.path }}/coverage/
+          retention-days: 30
+
+  integration-auth:
+    name: Tests intégration auth-service
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Run integration tests
+        working-directory: auth-service
+        run: mvn -B verify
+
+      - name: Upload rapports de tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-surefire-auth-service
+          path: auth-service/target/surefire-reports/
           retention-days: 30
 
   # ─── Tests E2E ───────────────────────────────────────────────────────────────

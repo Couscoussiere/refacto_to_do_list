@@ -49,6 +49,7 @@ jobs:
                       manifest:
                         - 'compatibility.json'
                         - '*/package.json'
+                        - 'auth-service/pom.xml'
 
     # ─── Tests par service (uniquement si modifié) ───────────────────────────────
 
@@ -60,29 +61,22 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-java@v4
               with:
-                  node-version: 20
-                  cache: npm
-                  cache-dependency-path: package-lock.json
-
-            - name: Installer les dépendances
-              run: npm ci
-
-            - name: Build
-              working-directory: auth-service
-              run: npm run build
+                  distribution: temurin
+                  java-version: 21
+                  cache: maven
 
             - name: Tests
               working-directory: auth-service
-              run: npm run test:coverage
+              run: mvn -B verify
 
-            - name: Upload rapport coverage auth-service
+            - name: Upload rapports de tests auth-service
               if: always()
               uses: actions/upload-artifact@v4
               with:
-                  name: coverage-auth-service
-                  path: auth-service/coverage/
+                  name: surefire-auth-service
+                  path: auth-service/target/surefire-reports/
                   retention-days: 7
 
     test-project:
@@ -191,7 +185,6 @@ jobs:
         needs: changes
         if: |
             needs.changes.outputs.root == 'true' ||
-            needs.changes.outputs.auth == 'true' ||
             needs.changes.outputs.project == 'true' ||
             needs.changes.outputs.task == 'true' ||
             needs.changes.outputs.notification == 'true'
@@ -238,7 +231,6 @@ jobs:
       name: Audit sécurité
       needs: changes
       if: |
-          needs.changes.outputs.auth == 'true' ||
           needs.changes.outputs.project == 'true' ||
           needs.changes.outputs.task == 'true' ||
           needs.changes.outputs.notification == 'true'
@@ -264,7 +256,6 @@ jobs:
         name: Vérification licences ${{ matrix.name }}
         needs: changes
         if: |
-            needs.changes.outputs.auth == 'true' ||
             needs.changes.outputs.project == 'true' ||
             needs.changes.outputs.task == 'true' ||
             needs.changes.outputs.notification == 'true' ||
@@ -334,8 +325,8 @@ jobs:
             matrix:
                 include:
                     - service: auth-service
-                      context: .
-                      dockerfile: auth-service/Dockerfile
+                      context: ./auth-service
+                      dockerfile: ./auth-service/Dockerfile
                     - service: project-service
                       context: .
                       dockerfile: project-service/Dockerfile
@@ -392,7 +383,11 @@ jobs:
 
                 FAILED=0
                 for svc in auth-service project-service task-service notification-service frontend; do
-                  PKG_VERSION=$(jq -r .version "$svc/package.json")
+                  if [ "$svc" = "auth-service" ]; then
+                    PKG_VERSION=$(mvn -q -f auth-service/pom.xml help:evaluate -Dexpression=project.version -DforceStdout)
+                  else
+                    PKG_VERSION=$(jq -r .version "$svc/package.json")
+                  fi
                   MANIFEST_VERSION=$(jq -r --arg s "$svc" --arg v "$LATEST" '.stacks[$v].services[$s]' compatibility.json)
                   IMAGE=$(jq -r --arg s "$svc" --arg v "$LATEST" '.stacks[$v].images[$s]' compatibility.json)
                   IMAGE_TAG="${IMAGE##*:}"

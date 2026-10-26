@@ -6,6 +6,7 @@ Application de gestion de projets et tâches en architecture microservices.
 
 - [Node.js](https://nodejs.org/) >= 20
 - [npm](https://www.npmjs.com/) >= 9
+- [Java](https://adoptium.net/) 21 + [Maven](https://maven.apache.org/) 3.9 (auth-service, Spring Boot)
 - [Docker](https://www.docker.com/) + Docker Compose (pour le déploiement complet)
 
 ---
@@ -38,6 +39,8 @@ Cela démarre :
 
 > Identifiants RabbitMQ par défaut : `guest` / `guest`
 
+Pour disposer d'un compte **admin**, renseigner `ADMIN_EMAIL` et `ADMIN_PASSWORD` dans le `.env` racine : l'auth-service crée ce compte au démarrage (ou promeut le compte existant avec cet email). Les comptes créés via l'inscription sont `standard`.
+
 Pour arrêter et nettoyer les volumes :
 
 ```bash
@@ -57,7 +60,6 @@ npm install
 ### 2. Installer les dépendances de chaque service
 
 ```bash
-cd auth-service && npm install && cd ..
 cd project-service && npm install && cd ..
 cd task-service && npm install && cd ..
 cd notification-service && npm install && cd ..
@@ -78,7 +80,11 @@ DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=root
 DB_NAME=auth_db
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=<mot de passe admin>
 ```
+
+> L'auth-service (Spring Boot) lit ces variables depuis l'environnement : les exporter dans le shell avant `mvn spring-boot:run`.
 
 Les JWT sont signés en **RS256** : la clé privée signe, la clé publique vérifie. Pour générer une paire de clés et afficher les deux lignes à copier dans `auth-service/.env` (et dans le `.env` racine pour Docker) :
 
@@ -119,10 +125,9 @@ RABBITMQ_URL=amqp://localhost:5672
 
 ### 4. Initialiser les bases de données
 
-Créer les bases de données MySQL et exécuter les schémas SQL :
+Créer les bases de données MySQL et exécuter les schémas SQL (l'auth-service applique lui-même ses migrations `auth-service/src/main/resources/db/migrations` au démarrage) :
 
 ```bash
-mysql -u root -p < auth-service/sql/schema.sql
 mysql -u root -p < project-service/sql/migrations/schema.sql
 mysql -u root -p < task-service/sql/schema.sql
 ```
@@ -130,10 +135,9 @@ mysql -u root -p < task-service/sql/schema.sql
 ### 5. Compiler et lancer chaque service
 
 ```bash
-# Auth Service
+# Auth Service (Spring Boot)
 cd auth-service
-npm run build
-npm start
+mvn spring-boot:run
 cd ..
 
 # Project Service
@@ -167,13 +171,15 @@ Accessible sur http://localhost:5173
 
 ## Tests
 
-### Tests unitaires (Vitest) — par service
+### Tests unitaires — par service
 
-Depuis le dossier de chaque service :
+Depuis le dossier de chaque service (JUnit/Maven pour l'auth-service, Vitest pour les autres) :
 
 ```bash
-# Auth Service
-cd auth-service && npm test
+# Auth Service (Java)
+cd auth-service && mvn test
+# sans Java installé :
+# docker run --rm -v "$PWD:/app" -w /app maven:3.9-eclipse-temurin-21 mvn -B test
 
 # Project Service
 cd project-service && npm test
@@ -243,7 +249,7 @@ Compile le TypeScript vers `dist/`.
 
 ```
 .
-├── auth-service/          # Authentification JWT + gestion des utilisateurs
+├── auth-service/          # Authentification JWT + comptes standard/admin (Java / Spring Boot)
 ├── project-service/       # Gestion des projets (CRUD + RabbitMQ)
 ├── task-service/          # Gestion des tâches (CRUD + RabbitMQ)
 ├── notification-service/  # Notifications temps réel (WebSocket + RabbitMQ)

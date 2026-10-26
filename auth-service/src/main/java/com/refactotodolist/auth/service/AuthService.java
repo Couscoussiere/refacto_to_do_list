@@ -26,7 +26,7 @@ import io.jsonwebtoken.Jwts;
 public class AuthService {
 
     private static final String SELECT_USER =
-            "SELECT id, email, first_name, last_name, password_hash, created_at FROM users";
+            "SELECT id, email, first_name, last_name, password_hash, role, created_at FROM users";
 
     // Format "ms" (60, "2 days", "10h", "7d"...) utilisé par jsonwebtoken pour JWT_EXPIRES_IN
     private static final Pattern DURATION =
@@ -42,11 +42,12 @@ public class AuthService {
         this.expiresIn = expiresIn;
     }
 
-    public String signToken(String sub, String email) {
+    public String signToken(String sub, String email, String role) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .claim("sub", sub)
                 .claim("email", email)
+                .claim("role", role)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(parseExpiresIn(expiresIn))))
                 .signWith(jwtKeys.getPrivateKey(), Jwts.SIG.RS256)
@@ -65,16 +66,25 @@ public class AuthService {
         return first(jdbc.query(SELECT_USER + " WHERE id = ? LIMIT 1", AuthService::toUser, id));
     }
 
+    public List<User> listUsers() {
+        return jdbc.query(SELECT_USER + " ORDER BY id", AuthService::toUser);
+    }
+
     public User createUser(String email, String firstName, String lastName, String passwordHash) {
+        return createUser(email, firstName, lastName, passwordHash, User.ROLE_STANDARD);
+    }
+
+    public User createUser(String email, String firstName, String lastName, String passwordHash, String role) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         jdbc.update(con -> {
             PreparedStatement ps = con.prepareStatement(
-                    "INSERT INTO users (email, first_name, last_name, password_hash) VALUES (?, ?, ?, ?)",
+                    "INSERT INTO users (email, first_name, last_name, password_hash, role) VALUES (?, ?, ?, ?, ?)",
                     new String[] {"id"});
             ps.setString(1, email);
             ps.setString(2, firstName);
             ps.setString(3, lastName);
             ps.setString(4, passwordHash);
+            ps.setString(5, role);
             return ps;
         }, keyHolder);
 
@@ -86,6 +96,15 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalStateException("User creation failed"));
     }
 
+    // Retourne true si une ligne a bien été supprimée
+    public boolean deleteUserById(long id) {
+        return jdbc.update("DELETE FROM users WHERE id = ?", id) > 0;
+    }
+
+    public void promoteToAdmin(long id) {
+        jdbc.update("UPDATE users SET role = ? WHERE id = ?", User.ROLE_ADMIN, id);
+    }
+
     // Fonction de mapping entre une ligne de la table users (BDD) et User (application)
     private static User toUser(ResultSet rs, int rowNum) throws SQLException {
         return new User(
@@ -94,6 +113,7 @@ public class AuthService {
                 rs.getString("first_name"),
                 rs.getString("last_name"),
                 rs.getString("password_hash"),
+                User.ROLE_ADMIN.equals(rs.getString("role")) ? User.ROLE_ADMIN : User.ROLE_STANDARD,
                 rs.getTimestamp("created_at").toInstant());
     }
 

@@ -3,14 +3,15 @@ import Register from './pages/Auth/Register/Register';
 import Login from './pages/Auth/Login/Login';
 import Home from './pages/Home/Home';
 import ProjectDetail from './pages/ProjectDetail/ProjectDetail';
+import Admin from './pages/Admin/Admin';
 import SessionExpiredModal from './component/SessionExpiredModal';
 import NotificationToast from './component/NotificationToast';
-import { isAuthenticated } from './service/authService';
+import { isAuthenticated, isAdmin } from './service/authService';
 import { type Project } from './service/projectService';
 import { UNAUTHORIZED_EVENT } from './utils/fetchWithAuth';
 import { useNotifications } from './hooks/useNotifications';
 
-type Page = 'register' | 'login' | 'home' | 'project';
+type Page = 'register' | 'login' | 'home' | 'project' | 'admin';
 
 export default function App() {
     const [page, setPage] = React.useState<Page>(isAuthenticated() ? 'home' : 'register');
@@ -35,7 +36,9 @@ export default function App() {
     };
 
     let content: React.ReactNode;
-    if (page === 'project' && selectedProject) {
+    if (page === 'admin' && isAdmin()) {
+        content = <Admin onBack={() => setPage('home')} />;
+    } else if (page === 'project' && selectedProject) {
         content = (
             <ProjectDetail
                 project={selectedProject}
@@ -43,8 +46,15 @@ export default function App() {
                 onLogout={() => setPage('login')}
             />
         );
-    } else if (page === 'home') {
-        content = <Home onLogout={() => setPage('login')} onOpenProject={openProject} />;
+    } else if (page === 'home' || page === 'admin') {
+        // Un non-admin qui atteint 'admin' retombe sur l'accueil
+        content = (
+            <Home
+                onLogout={() => setPage('login')}
+                onOpenProject={openProject}
+                onOpenAdmin={() => setPage('admin')}
+            />
+        );
     } else if (page === 'login') {
         content = <Login onGoToRegister={() => setPage('register')} onSuccess={() => setPage('home')} />;
     } else {

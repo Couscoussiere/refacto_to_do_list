@@ -16,7 +16,14 @@ jobs:
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
           FAILED=0
-          for pkg in auth-service/package.json project-service/package.json task-service/package.json notification-service/package.json frontend/package.json; do
+          AUTH_VERSION=$(mvn -q -f auth-service/pom.xml help:evaluate -Dexpression=project.version -DforceStdout)
+          if [ "$AUTH_VERSION" != "$TAG_VERSION" ]; then
+            echo "MISMATCH: auth-service/pom.xml has version $AUTH_VERSION but tag is v$TAG_VERSION"
+            FAILED=1
+          else
+            echo "OK: auth-service/pom.xml = $AUTH_VERSION"
+          fi
+          for pkg in project-service/package.json task-service/package.json notification-service/package.json frontend/package.json; do
             PKG_VERSION=$(jq -r .version "$pkg")
             if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
               echo "MISMATCH: $pkg has version $PKG_VERSION but tag is v$TAG_VERSION"
@@ -37,7 +44,7 @@ jobs:
       matrix:
         include:
           - service: auth-service
-            context: .
+            context: ./auth-service
           - service: project-service
             context: .
           - service: task-service

@@ -1,40 +1,40 @@
 # auth-service (Spring Boot)
 
-Réécriture en Java 21 / Spring Boot 3.5 de `auth-service` (Node/Express). Même API, mêmes variables d'environnement, même base : les deux versions sont interchangeables.
+Service d'authentification en Java 21 / Spring Boot 3.5 : inscription, connexion, JWT RS256, rôles `standard` / `admin` et suppression de comptes.
 
 ## Endpoints
 
-| Méthode | Route               | Description                                  |
-| ------- | ------------------- | -------------------------------------------- |
-| GET     | `/health`           | `{ "status": "ok" }`                         |
-| POST    | `/v1/auth/register` | Inscription → `201 { user, token }`          |
-| POST    | `/v1/auth/login`    | Connexion → `200 { user, token }`            |
-| GET     | `/v1/auth/me`       | Profil (header `Authorization: Bearer …`)    |
-| GET     | `/v1/docs`          | Swagger UI (désactivé si `DOCS_ENABLED=false`) |
+| Méthode | Route                    | Description                                               |
+| ------- | ------------------------ | --------------------------------------------------------- |
+| GET     | `/health`                | `{ "status": "ok" }`                                      |
+| POST    | `/v1/auth/register`      | Inscription (rôle `standard`) → `201 { user, token }`     |
+| POST    | `/v1/auth/login`         | Connexion → `200 { user, token }`                         |
+| GET     | `/v1/auth/me`            | Profil (header `Authorization: Bearer …`)                 |
+| DELETE  | `/v1/auth/me`            | Supprime son propre compte (standard ou admin) → `204`    |
+| GET     | `/v1/auth/users`         | Liste des comptes (admin uniquement)                      |
+| DELETE  | `/v1/auth/users/{id}`    | Supprime un compte **standard** (admin uniquement) → `204` |
+| GET     | `/v1/docs`               | Swagger UI (désactivé si `DOCS_ENABLED=false`)            |
+
+Le rôle est inclus dans le JWT (`role`) mais les routes admin le revérifient en base : un admin rétrogradé perd ses droits immédiatement.
 
 ## Variables d'environnement
 
-`PORT`, `CORS_ORIGIN`, `JWT_PRIVATE_KEY`, `JWT_PUBLIC_KEY` (PEM en base64, RS256), `JWT_EXPIRES_IN`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DOCS_ENABLED`.
+`PORT`, `CORS_ORIGIN`, `JWT_PRIVATE_KEY`, `JWT_PUBLIC_KEY` (PEM en base64, RS256), `JWT_EXPIRES_IN`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DOCS_ENABLED`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
 
-## Compatibilité avec la version Node
+Si `ADMIN_EMAIL` et `ADMIN_PASSWORD` sont définis, le compte admin est créé au démarrage (ou le compte existant est promu admin).
 
-- Migrations : même table `schema_migrations` et mêmes fichiers (`src/main/resources/db/migrations`), une base déjà migrée n'est pas touchée.
-- Mots de passe : les hash bcrypt `$2b$` créés par Node sont acceptés.
-- JWT : mêmes claims (`sub`, `email`, `iat`, `exp`), vérifiables par l'une ou l'autre version.
+## Migrations
+
+Fichiers `VXXX__*.sql` dans `src/main/resources/db/migrations`, appliqués au démarrage et tracés dans la table `schema_migrations`.
 
 ## Lancer
 
 ```bash
-# Tests (sans Java installé)
+# Tests
+mvn test
+# sans Java installé
 docker run --rm -v "$PWD:/app" -w /app maven:3.9-eclipse-temurin-21 mvn -B test
 
 # Image
-docker build -t auth-service-spring .
-```
-
-Pour l'utiliser dans `docker-compose.yml`, remplacer le `build` du service `auth-service` par :
-
-```yaml
-build:
-    context: ./auth-service-spring
+docker build -t auth-service .
 ```

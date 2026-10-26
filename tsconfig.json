@@ -1,7 +1,6 @@
 {
   "files": [],
   "references": [
-    { "path": "./auth-service" },
     { "path": "./project-service" },
     { "path": "./task-service" },
     { "path": "./notification-service" },

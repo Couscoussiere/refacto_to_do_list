@@ -59,7 +59,7 @@ public class RequireAuthInterceptor implements HandlerInterceptor {
                 return unauthorized(res, "Invalid token");
             }
 
-            req.setAttribute(AuthContext.REQUEST_ATTRIBUTE, new AuthContext(sub, claims.get("email", String.class)));
+            req.setAttribute(AuthContext.REQUEST_ATTRIBUTE, new AuthContext(sub, claims.get("email", String.class), claims.get("role", String.class)));
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return unauthorized(res, "Invalid token");

@@ -13,10 +13,14 @@ spring:
 
 app:
   cors-origin: ${CORS_ORIGIN:http://localhost:5173}
-  # Équivalent de NODE_ENV !== "production" côté Node
+  # Swagger UI / openapi.json (désactivé dans l'image Docker)
   docs-enabled: ${DOCS_ENABLED:true}
   jwt:
-    # Clés PEM encodées en base64 sur une seule ligne (mêmes variables que la version Node)
+    # Clés PEM encodées en base64 sur une seule ligne
     private-key: ${JWT_PRIVATE_KEY:}
     public-key: ${JWT_PUBLIC_KEY:}
     expires-in: ${JWT_EXPIRES_IN:1h}
+  # Compte admin créé (ou promu) au démarrage si les deux variables sont définies
+  admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}

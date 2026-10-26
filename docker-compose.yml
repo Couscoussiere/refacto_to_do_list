@@ -45,7 +45,7 @@ services:
         volumes:
             - mysql-auth-data:/var/lib/mysql
         healthcheck:
-            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+            test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1']
             interval: 10s
             timeout: 5s
             retries: 10
@@ -64,7 +64,7 @@ services:
         volumes:
             - mysql-project-data:/var/lib/mysql
         healthcheck:
-            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+            test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1']
             interval: 10s
             timeout: 5s
             retries: 10
@@ -83,7 +83,7 @@ services:
         volumes:
             - mysql-task-data:/var/lib/mysql
         healthcheck:
-            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+            test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1']
             interval: 10s
             timeout: 5s
             retries: 10
@@ -91,8 +91,7 @@ services:
 
     auth-service:
         build:
-            context: .
-            dockerfile: auth-service/Dockerfile
+            context: ./auth-service
         ports:
             - '3000:3000'
         environment:
@@ -101,14 +100,13 @@ services:
             - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
             - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
             - JWT_EXPIRES_IN=1h
-            - RABBITMQ_URL=amqp://rabbitmq:5672
+            - ADMIN_EMAIL=${ADMIN_EMAIL:-}
+            - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
             - DB_HOST=mysql-auth
             - DB_USER=auth_user
             - DB_PASSWORD=${MYSQL_AUTH_PASSWORD}
             - DB_NAME=authdb
         depends_on:
-            rabbitmq:
-                condition: service_healthy
             mysql-auth:
                 condition: service_healthy
 

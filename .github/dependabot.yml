@@ -12,7 +12,7 @@ updates:
       - dependencies
 
   # ─── Auth service ────────────────────────────────────────────────────────────
-  - package-ecosystem: npm
+  - package-ecosystem: maven
     directory: /auth-service
     schedule:
       interval: weekly

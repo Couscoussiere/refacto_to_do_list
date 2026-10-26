@@ -1,6 +1,7 @@
 package com.refactotodolist.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -29,6 +30,8 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.refactotodolist.auth.service.AdminAccountInitializer;
 
 import io.jsonwebtoken.Jwts;
 
@@ -273,6 +276,189 @@ class AuthControllerTest {
                     .andExpect(jsonPath("$.message").value("User not found"))
                     .andExpect(jsonPath("$.user").doesNotExist());
         }
+    }
+
+    @Nested
+    class DeleteMe {
+
+        private String token;
+
+        @BeforeEach
+        void registerAndLogin() throws Exception {
+            postJson("/v1/auth/register", USER);
+            token = login();
+        }
+
+        @Test
+        void compteStandard_204_etSupprimeEnBase() throws Exception {
+            mvc.perform(delete("/v1/auth/me").header("Authorization", "Bearer " + token))
+                    .andExpect(status().isNoContent());
+            assertThat(countUsers(USER.get("email"))).isZero();
+        }
+
+        @Test
+        void compteAdmin_204() throws Exception {
+            jdbc.update("UPDATE users SET role = 'admin' WHERE email = ?", USER.get("email"));
+            mvc.perform(delete("/v1/auth/me").header("Authorization", "Bearer " + token))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void apresSuppression_loginEchoue_401() throws Exception {
+            mvc.perform(delete("/v1/auth/me").header("Authorization", "Bearer " + token));
+            postJson("/v1/auth/login", Map.of("email", USER.get("email"), "password", USER.get("password")))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void sansToken_401() throws Exception {
+            mvc.perform(delete("/v1/auth/me")).andExpect(status().isUnauthorized());
+        }
+    }
+
+    @Nested
+    class Admin {
+
+        private static final Map<String, String> ADMIN = Map.of(
+                "email", "admin@test.com", "password", "Password123", "firstName", "Ada", "lastName", "Admin");
+        private static final Map<String, String> OTHER_ADMIN = Map.of(
+                "email", "admin2@test.com", "password", "Password123", "firstName", "Bob", "lastName", "Admin");
+
+        private String adminToken;
+        private String standardToken;
+        private long standardId;
+        private long otherAdminId;
+
+        @BeforeEach
+        void setUp() throws Exception {
+            postJson("/v1/auth/register", ADMIN);
+            jdbc.update("UPDATE users SET role = 'admin' WHERE email = ?", ADMIN.get("email"));
+            adminToken = login(ADMIN);
+
+            postJson("/v1/auth/register", USER);
+            standardToken = login(USER);
+            standardId = userId(USER.get("email"));
+
+            postJson("/v1/auth/register", OTHER_ADMIN);
+            jdbc.update("UPDATE users SET role = 'admin' WHERE email = ?", OTHER_ADMIN.get("email"));
+            otherAdminId = userId(OTHER_ADMIN.get("email"));
+        }
+
+        @Test
+        void nouveauCompte_roleStandard() throws Exception {
+            mvc.perform(get("/v1/auth/me").header("Authorization", "Bearer " + standardToken))
+                    .andExpect(jsonPath("$.user.role").value("standard"));
+        }
+
+        @Test
+        void tokenAdmin_contientLeRole() throws Exception {
+            JsonNode payload = objectMapper.readTree(Base64.getUrlDecoder().decode(adminToken.split("\\.")[1]));
+            assertThat(payload.get("role").asText()).isEqualTo("admin");
+        }
+
+        @Test
+        void listeUsers_admin_200_sansPasswordHash() throws Exception {
+            mvc.perform(get("/v1/auth/users").header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.users.length()").value(3))
+                    .andExpect(jsonPath("$.users[0].passwordHash").doesNotExist());
+        }
+
+        @Test
+        void listeUsers_standard_403() throws Exception {
+            mvc.perform(get("/v1/auth/users").header("Authorization", "Bearer " + standardToken))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void listeUsers_sansToken_401() throws Exception {
+            mvc.perform(get("/v1/auth/users")).andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void adminSupprimeStandard_204() throws Exception {
+            mvc.perform(delete("/v1/auth/users/" + standardId).header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isNoContent());
+            assertThat(countUsers(USER.get("email"))).isZero();
+        }
+
+        @Test
+        void adminNePeutPasSupprimerUnAdmin_403() throws Exception {
+            mvc.perform(delete("/v1/auth/users/" + otherAdminId).header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isForbidden());
+            assertThat(countUsers(OTHER_ADMIN.get("email"))).isOne();
+        }
+
+        @Test
+        void standardNePeutPasSupprimer_403() throws Exception {
+            mvc.perform(delete("/v1/auth/users/" + otherAdminId).header("Authorization", "Bearer " + standardToken))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void userInexistant_404() throws Exception {
+            mvc.perform(delete("/v1/auth/users/99999").header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void idInvalide_400() throws Exception {
+            mvc.perform(delete("/v1/auth/users/abc").header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void roleVerifieEnBase_adminRetrograde_403() throws Exception {
+            jdbc.update("UPDATE users SET role = 'standard' WHERE email = ?", ADMIN.get("email"));
+            mvc.perform(delete("/v1/auth/users/" + standardId).header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Nested
+    class EnsureAdminAccount {
+
+        @Autowired
+        private AdminAccountInitializer initializer;
+
+        @Test
+        void creeLeCompteAdmin() {
+            initializer.ensureAdminAccount(" Admin@Test.com ", "Password123");
+            assertThat(roleOf("admin@test.com")).isEqualTo("admin");
+        }
+
+        @Test
+        void promeutUnCompteExistant() throws Exception {
+            postJson("/v1/auth/register", USER);
+            initializer.ensureAdminAccount(USER.get("email"), "Password123");
+            assertThat(roleOf(USER.get("email"))).isEqualTo("admin");
+        }
+
+        @Test
+        void sansVariables_neFaitRien() {
+            initializer.ensureAdminAccount("", "");
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM users", Integer.class)).isZero();
+        }
+    }
+
+    private int countUsers(String email) {
+        return jdbc.queryForObject("SELECT COUNT(*) FROM users WHERE email = ?", Integer.class, email);
+    }
+
+    private long userId(String email) {
+        return jdbc.queryForObject("SELECT id FROM users WHERE email = ?", Long.class, email);
+    }
+
+    private String roleOf(String email) {
+        return jdbc.queryForObject("SELECT role FROM users WHERE email = ?", String.class, email);
+    }
+
+    private String login(Map<String, String> user) throws Exception {
+        String response = postJson("/v1/auth/login",
+                Map.of("email", user.get("email"), "password", user.get("password")))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        return objectMapper.readTree(response).get("token").asText();
     }
 
     private ResultActions postJson(String url, Object body) throws Exception {

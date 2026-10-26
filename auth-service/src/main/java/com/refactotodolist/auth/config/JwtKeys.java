@@ -11,6 +11,8 @@ import java.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
+
 // Les clés PEM sont stockées en base64 sur une seule ligne dans le .env
 @Component
 public class JwtKeys {
@@ -24,6 +26,14 @@ public class JwtKeys {
                    @Value("${app.jwt.public-key}") String publicKeyEnv) {
         this.privateKeyEnv = privateKeyEnv;
         this.publicKeyEnv = publicKeyEnv;
+    }
+
+    // Échoue au démarrage si une clé est absente ou invalide (ex : valeur coupée sur plusieurs lignes dans le .env),
+    // plutôt qu'à la première connexion
+    @PostConstruct
+    void validate() {
+        getPrivateKey();
+        getPublicKey();
     }
 
     public RSAPrivateKey getPrivateKey() {
