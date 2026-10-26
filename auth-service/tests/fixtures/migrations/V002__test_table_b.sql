@@ -1,1 +1,0 @@
-CREATE TABLE IF NOT EXISTS test_table_b (id INTEGER PRIMARY KEY, value TEXT)

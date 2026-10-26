@@ -1,10 +1,8 @@
-node_modules
-dist
+target
 Dockerfile
+.env
 .env.*
 .git
 .gitignore
-tests
-.env
-test-results
-playwright-report
+.idea
+*.iml
