@@ -3,10 +3,10 @@ FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /app
 
 # Cache des dépendances Maven
-COPY pom.xml ./
+COPY auth-service/pom.xml ./
 RUN mvn -B -q dependency:go-offline
 
-COPY src ./src
+COPY auth-service/src ./src
 RUN mvn -B -q package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
