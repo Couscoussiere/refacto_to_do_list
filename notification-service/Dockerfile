@@ -7,7 +7,6 @@ RUN npm install -g npm@11 && npm cache clean --force
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY auth-service/package.json ./auth-service/
 COPY project-service/package.json ./project-service/
 COPY task-service/package.json ./task-service/
 COPY notification-service/package.json ./notification-service/

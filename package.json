@@ -5,7 +5,6 @@
   "main": "dist/index.js",
   "license": "MIT",
   "workspaces": [
-    "auth-service",
     "project-service",
     "task-service",
     "notification-service"
