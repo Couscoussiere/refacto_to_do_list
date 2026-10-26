@@ -37,8 +37,9 @@ public class JwtKeys {
     }
 
     public RSAPrivateKey getPrivateKey() {
-        byte[] der = pemToDer(readPemFromEnv("JWT_PRIVATE_KEY", privateKeyEnv));
+        String value = requirePresent("JWT_PRIVATE_KEY", privateKeyEnv);
         try {
+            byte[] der = pemToDer(decodeBase64Pem(value));
             return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(der));
         } catch (Exception e) {
             throw new IllegalStateException("JWT_PRIVATE_KEY is invalid", e);
@@ -46,18 +47,24 @@ public class JwtKeys {
     }
 
     public RSAPublicKey getPublicKey() {
-        byte[] der = pemToDer(readPemFromEnv("JWT_PUBLIC_KEY", publicKeyEnv));
+        String value = requirePresent("JWT_PUBLIC_KEY", publicKeyEnv);
         try {
+            byte[] der = pemToDer(decodeBase64Pem(value));
             return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(der));
         } catch (Exception e) {
             throw new IllegalStateException("JWT_PUBLIC_KEY is invalid", e);
         }
     }
 
-    private static String readPemFromEnv(String name, String value) {
+    private static String requirePresent(String name, String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalStateException(name + " is missing in environment");
         }
+        return value;
+    }
+
+    // Toute erreur de décodage (base64, PEM, clé) est remontée comme "invalid" par l'appelant
+    private static String decodeBase64Pem(String value) {
         return new String(Base64.getMimeDecoder().decode(value.trim()), StandardCharsets.UTF_8);
     }
 

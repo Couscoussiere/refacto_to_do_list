@@ -27,6 +27,11 @@ Si `ADMIN_EMAIL` et `ADMIN_PASSWORD` sont définis, le compte admin est créé a
 
 Fichiers `VXXX__*.sql` dans `src/main/resources/db/migrations`, appliqués au démarrage et tracés dans la table `schema_migrations`.
 
+## Tests
+
+- **Unitaires** (JUnit 5 + Mockito, sans Spring ni base) : `JwtKeysTest`, `AuthServiceTest`, `AdminAccountInitializerTest`, `RequireAuthInterceptorTest`, `UserTest`.
+- **Intégration** (`AuthControllerTest`) : contexte Spring complet + MockMvc + base H2 en mémoire, couvre toutes les routes HTTP.
+
 ## Lancer
 
 ```bash
