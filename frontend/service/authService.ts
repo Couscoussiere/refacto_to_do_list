@@ -77,3 +77,7 @@ export function isAuthenticated(): boolean {
     }
     return true;
 }
+
+export function isAdmin(): boolean {
+    return getUser()?.role === 'admin';
+}

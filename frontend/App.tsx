@@ -5,9 +5,11 @@ import Login from './pages/Auth/Login/Login';
 import Landing from './pages/Landing/Landing';
 import Home from './pages/Home/Home';
 import ProjectDetail from './pages/ProjectDetail/ProjectDetail';
+import Admin from './pages/Admin/Admin';
 import NotFound from './pages/NotFound/NotFound';
 import ProtectedRoute from './component/ProtectedRoute';
 import PublicOnlyRoute from './component/PublicOnlyRoute';
+import AdminRoute from './component/AdminRoute';
 import SessionExpiredModal from './component/SessionExpiredModal';
 import NotificationToast from './component/NotificationToast';
 import { getProject, type Project } from './service/projectService';
@@ -47,8 +49,14 @@ function HomePage() {
         <Home
             onLogout={() => navigate('/login')}
             onOpenProject={(p: Project) => navigate(`/projects/${p.id}`, { state: { project: p } })}
+            onOpenAdmin={() => navigate('/admin')}
         />
     );
+}
+
+function AdminPage() {
+    const navigate = useNavigate();
+    return <Admin onBack={() => navigate('/projects')} />;
 }
 
 function ProjectDetailPage() {
@@ -115,6 +123,11 @@ export default function App() {
                 <Route element={<ProtectedRoute />}>
                     <Route path="/projects" element={<HomePage />} />
                     <Route path="/projects/:id" element={<ProjectDetailPage />} />
+
+                    {/* Réservé aux comptes admin */}
+                    <Route element={<AdminRoute />}>
+                        <Route path="/admin" element={<AdminPage />} />
+                    </Route>
                 </Route>
 
                 <Route path="*" element={<NotFound />} />
