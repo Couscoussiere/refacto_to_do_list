@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import { createTestApp } from "./helpers/createTestApp.js";
+import { getJwtPrivateKey, JWT_ALGORITHM } from "../src/config/jwtKeys.js";
 
 const USER = {
 	email: "olivier.dick@test.com",
@@ -44,7 +45,8 @@ describe("GET /v1/auth/me", () => {
 	it("token expiré → 401", async () => {
 		const expiredToken = jwt.sign(
 			{ sub: "1", email: USER.email, exp: Math.floor(Date.now() / 1000) - 3600 },
-			process.env.JWT_SECRET as string
+			getJwtPrivateKey(),
+			{ algorithm: JWT_ALGORITHM }
 		);
 
 		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${expiredToken}`);
@@ -59,7 +61,9 @@ describe("GET /v1/auth/me", () => {
 	});
 
 	it("userId dans le token inexistant en base → 404", async () => {
-		const fakeToken = jwt.sign({ sub: "99999", email: "fantome@test.com" }, process.env.JWT_SECRET as string);
+		const fakeToken = jwt.sign({ sub: "99999", email: "fantome@test.com" }, getJwtPrivateKey(), {
+			algorithm: JWT_ALGORITHM,
+		});
 
 		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${fakeToken}`);
 

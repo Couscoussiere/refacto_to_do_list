@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { generateKeyPairSync } from "node:crypto";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import { createTestApp } from "./helpers/createTestApp.js";
+import { getJwtPrivateKey, JWT_ALGORITHM } from "../src/config/jwtKeys.js";
 
 const USER = {
 	email: "olivier.dick@test.com",
@@ -47,7 +49,8 @@ describe("requireAuth middleware", () => {
 	it("token expiré → 401", async () => {
 		const expiredToken = jwt.sign(
 			{ sub: "1", email: USER.email, exp: Math.floor(Date.now() / 1000) - 3600 },
-			process.env.JWT_SECRET as string
+			getJwtPrivateKey(),
+			{ algorithm: JWT_ALGORITHM }
 		);
 
 		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${expiredToken}`);
@@ -63,8 +66,27 @@ describe("requireAuth middleware", () => {
 		expect(res.body.message).toBe("Invalid token");
 	});
 
+	it("token signé en HS256 (ancien secret partagé) → 401", async () => {
+		const hsToken = jwt.sign({ sub: "1", email: USER.email }, "test-secret-key", { algorithm: "HS256" });
+
+		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${hsToken}`);
+
+		expect(res.status).toBe(401);
+		expect(res.body.message).toBe("Invalid token");
+	});
+
+	it("token signé par une autre clé privée → 401", async () => {
+		const { privateKey: autreCle } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+		const forgedToken = jwt.sign({ sub: "1", email: USER.email }, autreCle, { algorithm: JWT_ALGORITHM });
+
+		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${forgedToken}`);
+
+		expect(res.status).toBe(401);
+		expect(res.body.message).toBe("Invalid token");
+	});
+
 	it("token sans sub → 401", async () => {
-		const tokenSansSub = jwt.sign({ email: USER.email }, process.env.JWT_SECRET as string);
+		const tokenSansSub = jwt.sign({ email: USER.email }, getJwtPrivateKey(), { algorithm: JWT_ALGORITHM });
 
 		const res = await request(app).get("/v1/auth/me").set("Authorization", `Bearer ${tokenSansSub}`);
 

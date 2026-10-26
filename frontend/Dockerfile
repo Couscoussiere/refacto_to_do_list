@@ -12,7 +12,7 @@ COPY service ./service
 COPY utils ./utils
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:1.30-alpine
 
 ARG VERSION=dev
 ARG GIT_SHA=unknown

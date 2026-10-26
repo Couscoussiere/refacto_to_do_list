@@ -11,7 +11,7 @@ jobs:
 
     changes:
         name: Détection des changements
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         outputs:
             auth: ${{ steps.filter.outputs.auth }}
             project: ${{ steps.filter.outputs.project }}
@@ -56,7 +56,7 @@ jobs:
         name: Tests auth-service
         needs: changes
         if: needs.changes.outputs.auth == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v4
 
@@ -89,7 +89,7 @@ jobs:
         name: Tests project-service
         needs: changes
         if: needs.changes.outputs.project == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v4
 
@@ -122,7 +122,7 @@ jobs:
         name: Tests task-service
         needs: changes
         if: needs.changes.outputs.task == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v4
 
@@ -155,7 +155,7 @@ jobs:
         name: Tests notification-service
         needs: changes
         if: needs.changes.outputs.notification == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v4
 
@@ -195,7 +195,7 @@ jobs:
             needs.changes.outputs.project == 'true' ||
             needs.changes.outputs.task == 'true' ||
             needs.changes.outputs.notification == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v4
 
@@ -215,7 +215,7 @@ jobs:
         name: Hadolint ${{ matrix.service }}
         needs: changes
         if: needs.changes.outputs.dockerfile == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         strategy:
             matrix:
                 service:
@@ -242,7 +242,7 @@ jobs:
           needs.changes.outputs.project == 'true' ||
           needs.changes.outputs.task == 'true' ||
           needs.changes.outputs.notification == 'true'
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-24.04
       steps:
           - uses: actions/checkout@v4
 
@@ -269,7 +269,7 @@ jobs:
             needs.changes.outputs.task == 'true' ||
             needs.changes.outputs.notification == 'true' ||
             needs.changes.outputs.frontend == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         strategy:
             matrix:
                 include:
@@ -308,7 +308,7 @@ jobs:
             needs.changes.outputs.task == 'true' ||
             needs.changes.outputs.notification == 'true' ||
             needs.changes.outputs.frontend == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v4
 
@@ -329,7 +329,7 @@ jobs:
             needs.changes.outputs.task == 'true' ||
             needs.changes.outputs.notification == 'true' ||
             needs.changes.outputs.frontend == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         strategy:
             matrix:
                 include:
@@ -377,7 +377,7 @@ jobs:
         name: Vérification compatibility.json
         needs: changes
         if: needs.changes.outputs.manifest == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v4
 

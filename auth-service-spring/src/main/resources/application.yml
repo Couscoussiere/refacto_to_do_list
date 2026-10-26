@@ -1,0 +1,22 @@
+server:
+  port: ${PORT:3000}
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:authdb}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10
+
+app:
+  cors-origin: ${CORS_ORIGIN:http://localhost:5173}
+  # Équivalent de NODE_ENV !== "production" côté Node
+  docs-enabled: ${DOCS_ENABLED:true}
+  jwt:
+    # Clés PEM encodées en base64 sur une seule ligne (mêmes variables que la version Node)
+    private-key: ${JWT_PRIVATE_KEY:}
+    public-key: ${JWT_PUBLIC_KEY:}
+    expires-in: ${JWT_EXPIRES_IN:1h}

@@ -71,13 +71,22 @@ Chaque service nécessite les variables suivantes (à créer dans un fichier `.e
 **auth-service/.env**
 ```env
 PORT=3000
-JWT_SECRET=your_secret_key
+JWT_PRIVATE_KEY=<clé privée RSA en base64>
+JWT_PUBLIC_KEY=<clé publique RSA en base64>
 JWT_EXPIRES_IN=1d
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=root
 DB_NAME=auth_db
 ```
+
+Les JWT sont signés en **RS256** : la clé privée signe, la clé publique vérifie. Pour générer une paire de clés et afficher les deux lignes à copier dans `auth-service/.env` (et dans le `.env` racine pour Docker) :
+
+```bash
+node -e "const {generateKeyPairSync}=require('crypto');const k=generateKeyPairSync('rsa',{modulusLength:2048,privateKeyEncoding:{type:'pkcs8',format:'pem'},publicKeyEncoding:{type:'spki',format:'pem'}});console.log('JWT_PRIVATE_KEY='+Buffer.from(k.privateKey).toString('base64'));console.log('JWT_PUBLIC_KEY='+Buffer.from(k.publicKey).toString('base64'))"
+```
+
+> Chaque valeur doit tenir sur **une seule ligne**. En production, utiliser une paire différente, stockée dans les secrets GitHub `JWT_PRIVATE_KEY` et `JWT_PUBLIC_KEY`.
 
 **project-service/.env**
 ```env

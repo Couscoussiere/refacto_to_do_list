@@ -12,7 +12,7 @@ permissions:
 jobs:
   build-and-push-dev:
     name: Build & Push Dev ${{ matrix.service }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
        matrix:
         include:

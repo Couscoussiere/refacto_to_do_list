@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { getJwtPublicKey, JWT_ALGORITHM } from "../config/jwtKeys.js";
 
 type JwtClaims = {
   sub?: string;
@@ -18,14 +19,6 @@ declare global {
   }
 }
 
-const getJwtSecret = (): string => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error("JWT_SECRET is missing in environment");
-  }
-  return secret;
-};
-
 export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   const header = req.header("authorization") || req.header("Authorization");
   if (!header) {
@@ -40,7 +33,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
   }
 
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as JwtClaims;
+    const decoded = jwt.verify(token, getJwtPublicKey(), { algorithms: [JWT_ALGORITHM] }) as JwtClaims;
     if (!decoded.sub) {
       res.status(401).json({ message: "Invalid token" });
       return;

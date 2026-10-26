@@ -10,7 +10,7 @@ jobs:
 
   check-changes:
     name: Vérification des commits récents
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       has_changes: ${{ steps.check.outputs.has_changes }}
     steps:
@@ -36,7 +36,7 @@ jobs:
     name: Tests intégration ${{ matrix.service }}
     needs: check-changes
     if: needs.check-changes.outputs.has_changes == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         include:
@@ -79,7 +79,7 @@ jobs:
     name: Tests E2E Playwright
     needs: check-changes
     if: needs.check-changes.outputs.has_changes == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -123,7 +123,7 @@ jobs:
     name: Scan Trivy ${{ matrix.service }}
     needs: check-changes
     if: needs.check-changes.outputs.has_changes == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       security-events: write
     strategy:
@@ -160,7 +160,7 @@ jobs:
     name: Analyse CodeQL
     needs: check-changes
     if: needs.check-changes.outputs.has_changes == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       security-events: write
     steps:

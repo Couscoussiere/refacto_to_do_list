@@ -1,7 +1,7 @@
 /* ── Page ─────────────────────────────────────────────────────────── */
 .page {
     min-height: 100vh;
-    background-color: violet;
+    background-color: #f0f2f5;
     font-family: 'Inter', sans-serif;
     display: flex;
     flex-direction: column;
@@ -9,7 +9,7 @@
 
 /* ── Header ──────────────────────────────────────────────────────── */
 .header {
-    background-color: green;
+    background-color: #191970;
     padding: 0 48px;
     height: 64px;
     display: flex;

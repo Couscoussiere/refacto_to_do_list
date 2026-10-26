@@ -12,7 +12,7 @@ services:
             start_period: 30s
 
     reverse-proxy:
-        image: nginx:alpine
+        image: nginx:1.30-alpine
         ports:
             - '8080:80'
         volumes:
@@ -98,7 +98,8 @@ services:
         environment:
             - PORT=3000
             - CORS_ORIGIN=${CORS_ORIGIN}
-            - JWT_SECRET=${JWT_SECRET}
+            - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
+            - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
             - JWT_EXPIRES_IN=1h
             - RABBITMQ_URL=amqp://rabbitmq:5672
             - DB_HOST=mysql-auth

@@ -1,23 +1,16 @@
 
-import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import { AuthTokenPayload,toUser, UserRow} from "../models/User.js";
 import type { Pool as Connection, ResultSetHeader, RowDataPacket } from "mysql2";
+import { getJwtPrivateKey, JWT_ALGORITHM } from "../config/jwtKeys.js";
 
 
 type UserRowPacket = RowDataPacket & UserRow;
 
-const getJwtSecret = (): string => {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-        throw new Error("JWT_SECRET is missing in environment");
-    }
-    return secret;
-};
-
 export const signToken = (payload: AuthTokenPayload): string => {
-    const secret: Secret = getJwtSecret();
+    const privateKey = getJwtPrivateKey();
     const expiresIn = (process.env.JWT_EXPIRES_IN || "1h") as SignOptions["expiresIn"];
-    return jwt.sign(payload, secret, { expiresIn } as SignOptions);
+    return jwt.sign(payload, privateKey, { algorithm: JWT_ALGORITHM, expiresIn } as SignOptions);
 };
 
 export const normalizeEmail = (email: string): string => email.trim().toLowerCase();

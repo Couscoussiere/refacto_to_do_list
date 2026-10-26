@@ -15,7 +15,7 @@ jobs:
       contents: read
       packages: write
     name: Build & Push ${{ matrix.service }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         service:
@@ -53,10 +53,8 @@ jobs:
 
           docker pull "$IMAGE:dev"
 
-          docker tag "$IMAGE:dev" "$IMAGE:latest"
           docker tag "$IMAGE:dev" "$IMAGE:main"
           docker tag "$IMAGE:dev" "$IMAGE:sha-${{ github.sha }}"
 
-          docker push "$IMAGE:latest"
           docker push "$IMAGE:main"
           docker push "$IMAGE:sha-${{ github.sha }}"
