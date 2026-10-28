@@ -17,5 +17,9 @@ node_modules/
 .tmp/
 
 dist/
+*.tsbuildinfo
 dist-frontend/
 .claude/settings.local.json
+
+# Clés RSA
+*.pem

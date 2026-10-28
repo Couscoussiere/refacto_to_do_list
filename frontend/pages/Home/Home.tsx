@@ -1,11 +1,13 @@
 import React from 'react';
 import style from './Home.module.css';
-import { logout, getUser } from '../../service/authService';
+import { logout, getUser, isAdmin } from '../../service/authService';
+import { deleteMyAccount } from '../../service/userService';
 import { getAllProjects, createProject, type Project, type CreateProjectPayload, type ProjectStatus } from '../../service/projectService';
 
 interface Props {
     onLogout: () => void;
     onOpenProject: (project: Project) => void;
+    onOpenAdmin: () => void;
 }
 
 const STATUS_LABELS: Record<ProjectStatus, string> = {
@@ -31,7 +33,7 @@ const EMPTY_FORM: CreateProjectPayload = {
     status: 'NOT_STARTED',
 };
 
-export default function Home({ onLogout, onOpenProject }: Props) {
+export default function Home({ onLogout, onOpenProject, onOpenAdmin }: Props) {
     const user = getUser();
     const [projects, setProjects] = React.useState<Project[]>([]);
     const [loading, setLoading] = React.useState(true);
@@ -61,6 +63,17 @@ export default function Home({ onLogout, onOpenProject }: Props) {
     const handleLogout = () => {
         logout();
         onLogout();
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!window.confirm('Supprimer définitivement votre compte ? Cette action est irréversible.')) return;
+        try {
+            await deleteMyAccount();
+            logout();
+            onLogout();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Erreur inconnue');
+        }
     };
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -104,8 +117,16 @@ export default function Home({ onLogout, onOpenProject }: Props) {
                 <div className={style.userArea}>
                     <div className={style.avatar}>{initials}</div>
                     <span className={style.userName}>{fullName}</span>
+                    {isAdmin() && (
+                        <button className={style.logoutBtn} onClick={onOpenAdmin}>
+                            Administration
+                        </button>
+                    )}
                     <button className={style.logoutBtn} onClick={handleLogout}>
                         Se déconnecter
+                    </button>
+                    <button className={`${style.logoutBtn} ${style.dangerBtn}`} onClick={handleDeleteAccount}>
+                        Supprimer mon compte
                     </button>
                 </div>
             </header>

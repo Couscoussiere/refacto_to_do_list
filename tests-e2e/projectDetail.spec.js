@@ -15,10 +15,10 @@ test.describe('Page ProjectDetail', () => {
 
     test.beforeEach(async ({ page }) => {
         // Mocker les API avant le chargement
-        await page.route('http://localhost:8080/projects/**', route =>
+        await page.route('**/v1/projects/**', route =>
             route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ projects: [FAKE_PROJECT] }) })
         );
-        await page.route('http://localhost:8080/tasks/**', route =>
+        await page.route('**/v1/tasks/**', route =>
             route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: FAKE_TASKS }) })
         );
 
@@ -28,7 +28,7 @@ test.describe('Page ProjectDetail', () => {
             localStorage.setItem('user', JSON.stringify(user));
             localStorage.setItem('token', token);
         }, { user: FAKE_USER, token: FAKE_TOKEN });
-        await page.reload();
+        await page.goto('/projects');
 
         // Naviguer vers le détail du projet
         await expect(page.getByText('Projet Alpha')).toBeVisible();

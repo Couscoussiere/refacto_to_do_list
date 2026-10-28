@@ -1,18 +1,19 @@
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
-COPY vite.config.ts index.html App.tsx index.tsx styles.css ./
-COPY component ./component
-COPY constant ./constant
-COPY hooks ./hooks
-COPY interface ./interface
-COPY pages ./pages
-COPY service ./service
-COPY utils ./utils
+
+COPY . .
 RUN npm run build
 
-FROM nginx:alpine
+# Variante officielle de nginx qui tourne en non-root (utilisateur nginx, UID 101, port 8080)
+FROM nginxinc/nginx-unprivileged:1.30-alpine
+
+USER root
+RUN apk upgrade --no-cache
+
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 ARG VERSION=dev
 ARG GIT_SHA=unknown
@@ -30,8 +31,6 @@ LABEL org.opencontainers.image.title="frontend" \
       com.refactotodolist.requires.task-service=">=1.0.0 <2.0.0" \
       com.refactotodolist.requires.notification-service=">=1.0.0 <2.0.0"
 
-RUN apk update && apk upgrade --no-cache
+EXPOSE 8080
 
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+USER 101

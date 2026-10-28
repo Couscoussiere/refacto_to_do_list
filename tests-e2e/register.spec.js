@@ -4,8 +4,7 @@ import { test, expect } from '@playwright/test';
 test.describe("Page Register", () => {
 
     test.beforeEach(async ({ page }) => {
-        await page.goto('/');
-        await page.getByText("S'inscrire").click();
+        await page.goto('/register');
         await expect(page.getByRole('heading', { name: 'Créer un compte' })).toBeVisible();
     });
 
@@ -53,8 +52,8 @@ test.describe("Page Register", () => {
                 }),
             })
         );
-        await page.route('**/projects', route =>
-            route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+        await page.route('**/v1/projects/**', route =>
+            route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ projects: [] }) })
         );
 
         await page.locator('#firstName').fill('Jean');

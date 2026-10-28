@@ -6,6 +6,7 @@ Application de gestion de projets et tâches en architecture microservices.
 
 - [Node.js](https://nodejs.org/) >= 20
 - [npm](https://www.npmjs.com/) >= 9
+- [Java](https://adoptium.net/) 21 + [Maven](https://maven.apache.org/) 3.9 (auth-service, Spring Boot)
 - [Docker](https://www.docker.com/) + Docker Compose (pour le déploiement complet)
 
 ---
@@ -18,25 +19,27 @@ La méthode la plus simple pour démarrer l'ensemble de la stack.
 docker compose up --build
 ```
 
-Cela démarre :
-| Service | URL |
+L'application est accessible sur **http://localhost:8080** (reverse-proxy nginx), seul point d'entrée exposé :
+
+| Chemin | Service |
 |---|---|
-| Frontend (React) | http://localhost:5173 | 
+| `/` | Frontend (React) |
+| `/v1/auth/` | Auth Service (Java / Spring Boot) |
+| `/v1/projects/` | Project Service |
+| `/v1/tasks/` | Task Service |
+| `/v1/notifications/` | Notification Service (WebSocket) |
 
-| Nginx (reverse proxy) | http://localhost:8080 |
+Les backends, les bases MySQL et RabbitMQ sont sur un réseau Docker interne (`backend`, `internal: true`) et ne publient aucun port : ils ne sont pas joignables depuis l'extérieur.
 
-| Auth Service | http://localhost:3000 |
+Par défaut, la stack démarre en environnement **TEST** (images reconstruites, Swagger activé). Les réglages propres à chaque environnement (port, tag d'image, limites CPU / mémoire…) sont dans `environments/` ; les secrets restent dans `.env` :
 
-| Project Service | http://localhost:3001 |
+```bash
+# UAT (port 8081) et PROD (port 80) : images publiées par la CI, sans reconstruction
+docker compose --env-file .env --env-file environments/uat.env up -d --no-build
+docker compose --env-file .env --env-file environments/prod.env up -d --no-build
+```
 
-| Task Service | http://localhost:3002 |
-
-| Notification Service | http://localhost:3003 |
-
-| RabbitMQ Management | http://localhost:15672 |
-
-
-> Identifiants RabbitMQ par défaut : `guest` / `guest`
+Pour disposer d'un compte **admin**, renseigner `ADMIN_EMAIL` et `ADMIN_PASSWORD` dans le `.env` racine : l'auth-service crée ce compte au démarrage (ou promeut le compte existant avec cet email). Les comptes créés via l'inscription sont `standard`.
 
 Pour arrêter et nettoyer les volumes :
 
@@ -57,7 +60,6 @@ npm install
 ### 2. Installer les dépendances de chaque service
 
 ```bash
-cd auth-service && npm install && cd ..
 cd project-service && npm install && cd ..
 cd task-service && npm install && cd ..
 cd notification-service && npm install && cd ..
@@ -71,13 +73,26 @@ Chaque service nécessite les variables suivantes (à créer dans un fichier `.e
 **auth-service/.env**
 ```env
 PORT=3000
-JWT_SECRET=your_secret_key
+JWT_PRIVATE_KEY=<clé privée RSA en base64>
+JWT_PUBLIC_KEY=<clé publique RSA en base64>
 JWT_EXPIRES_IN=1d
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=root
 DB_NAME=auth_db
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=<mot de passe admin>
 ```
+
+> L'auth-service (Spring Boot) lit ces variables depuis l'environnement : les exporter dans le shell avant `mvn spring-boot:run`.
+
+Les JWT sont signés en **RS256** : la clé privée signe, la clé publique vérifie. Pour générer une paire de clés et afficher les deux lignes à copier dans `auth-service/.env` (et dans le `.env` racine pour Docker) :
+
+```bash
+node -e "const {generateKeyPairSync}=require('crypto');const k=generateKeyPairSync('rsa',{modulusLength:2048,privateKeyEncoding:{type:'pkcs8',format:'pem'},publicKeyEncoding:{type:'spki',format:'pem'}});console.log('JWT_PRIVATE_KEY='+Buffer.from(k.privateKey).toString('base64'));console.log('JWT_PUBLIC_KEY='+Buffer.from(k.publicKey).toString('base64'))"
+```
+
+> Chaque valeur doit tenir sur **une seule ligne**. En production, utiliser une paire différente, stockée dans les secrets GitHub `JWT_PRIVATE_KEY` et `JWT_PUBLIC_KEY`.
 
 **project-service/.env**
 ```env
@@ -110,10 +125,9 @@ RABBITMQ_URL=amqp://localhost:5672
 
 ### 4. Initialiser les bases de données
 
-Créer les bases de données MySQL et exécuter les schémas SQL :
+Créer les bases de données MySQL et exécuter les schémas SQL (l'auth-service applique lui-même ses migrations `auth-service/src/main/resources/db/migrations` au démarrage) :
 
 ```bash
-mysql -u root -p < auth-service/sql/schema.sql
 mysql -u root -p < project-service/sql/migrations/schema.sql
 mysql -u root -p < task-service/sql/schema.sql
 ```
@@ -121,10 +135,9 @@ mysql -u root -p < task-service/sql/schema.sql
 ### 5. Compiler et lancer chaque service
 
 ```bash
-# Auth Service
+# Auth Service (Spring Boot)
 cd auth-service
-npm run build
-npm start
+mvn spring-boot:run
 cd ..
 
 # Project Service
@@ -158,13 +171,15 @@ Accessible sur http://localhost:5173
 
 ## Tests
 
-### Tests unitaires (Vitest) — par service
+### Tests unitaires — par service
 
-Depuis le dossier de chaque service :
+Depuis le dossier de chaque service (JUnit/Maven pour l'auth-service, Vitest pour les autres) :
 
 ```bash
-# Auth Service
-cd auth-service && npm test
+# Auth Service (Java)
+cd auth-service && mvn test
+# sans Java installé :
+# docker run --rm -v "$PWD:/app" -w /app maven:3.9-eclipse-temurin-21 mvn -B test
 
 # Project Service
 cd project-service && npm test
@@ -234,7 +249,7 @@ Compile le TypeScript vers `dist/`.
 
 ```
 .
-├── auth-service/          # Authentification JWT + gestion des utilisateurs
+├── auth-service/          # Authentification JWT + comptes standard/admin (Java / Spring Boot)
 ├── project-service/       # Gestion des projets (CRUD + RabbitMQ)
 ├── task-service/          # Gestion des tâches (CRUD + RabbitMQ)
 ├── notification-service/  # Notifications temps réel (WebSocket + RabbitMQ)

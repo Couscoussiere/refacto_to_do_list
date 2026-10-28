@@ -222,3 +222,48 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+/* ── Animation d'entrée (depuis la page principale) ────────────── */
+/* Le fond bleu nuit est commun aux deux pages : seul le contenu bouge. */
+.enter {
+    overflow: hidden;
+}
+
+.enter .right {
+    animation: slideInRight 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.enter .card {
+    animation: riseIn 0.5s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.enter .leftBody {
+    animation: riseIn 0.5s 0.15s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.enter .footer {
+    animation: fadeIn 0.5s 0.3s ease both;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+}
+
+@keyframes riseIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .enter .right,
+    .enter .card,
+    .enter .leftBody,
+    .enter .footer {
+        animation: none;
+    }
+}

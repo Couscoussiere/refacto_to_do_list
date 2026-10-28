@@ -2,19 +2,20 @@ name: Deploy
 
 on:
     workflow_run:
-        workflows: ['Docker Build Dev', 'Docker Build & Push']
+        workflows: ['Build & Publish']
         types: [completed]
     workflow_dispatch:
 
 jobs:
     deploy-integration:
         name: Déploiement Intégration
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         environment: integration
         if: |
             github.event_name == 'workflow_dispatch' ||
             (github.event_name == 'workflow_run' &&
-             github.event.workflow_run.name == 'Docker Build Dev' &&
+             github.event.workflow_run.event == 'push' &&
+             github.event.workflow_run.head_branch == 'dev' &&
              github.event.workflow_run.conclusion == 'success')
 
         steps:
@@ -29,7 +30,8 @@ jobs:
                   MYSQL_AUTH_PASSWORD=${{ secrets.MYSQL_AUTH_PASSWORD }}
                   MYSQL_PROJECT_PASSWORD=${{ secrets.MYSQL_PROJECT_PASSWORD }}
                   MYSQL_TASK_PASSWORD=${{ secrets.MYSQL_TASK_PASSWORD }}
-                  JWT_SECRET=${{ secrets.JWT_SECRET }}
+                  JWT_PRIVATE_KEY=${{ secrets.JWT_PRIVATE_KEY }}
+                  JWT_PUBLIC_KEY=${{ secrets.JWT_PUBLIC_KEY }}
                   CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
                   IMAGE_TAG=dev
                   ENVEOF
@@ -69,11 +71,12 @@ jobs:
 
     deploy-production:
         name: Déploiement Production
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         environment: production
         if: |
             github.event_name == 'workflow_run' &&
-            github.event.workflow_run.name == 'Docker Build & Push' &&
+            github.event.workflow_run.event == 'push' &&
+            github.event.workflow_run.head_branch == 'main' &&
             github.event.workflow_run.conclusion == 'success'
 
         steps:
@@ -88,9 +91,10 @@ jobs:
                   MYSQL_AUTH_PASSWORD=${{ secrets.MYSQL_AUTH_PASSWORD }}
                   MYSQL_PROJECT_PASSWORD=${{ secrets.MYSQL_PROJECT_PASSWORD }}
                   MYSQL_TASK_PASSWORD=${{ secrets.MYSQL_TASK_PASSWORD }}
-                  JWT_SECRET=${{ secrets.JWT_SECRET }}
+                  JWT_PRIVATE_KEY=${{ secrets.JWT_PRIVATE_KEY }}
+                  JWT_PUBLIC_KEY=${{ secrets.JWT_PUBLIC_KEY }}
                   CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
-                  IMAGE_TAG=latest
+                  IMAGE_TAG=sha-${{ github.event.workflow_run.head_sha }}
                   ENVEOF
 
             - name: Copier les fichiers sur la VM

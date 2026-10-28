@@ -1,0 +1,63 @@
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(25, 25, 112, 0.08);
+    font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.table th {
+    background-color: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+.role {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.role_admin {
+    background-color: #e0e7ff;
+    color: #191970;
+}
+
+.role_standard {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.actions {
+    text-align: right;
+}
+
+.deleteBtn {
+    padding: 6px 14px;
+    background-color: transparent;
+    border: 1.5px solid #fca5a5;
+    border-radius: 8px;
+    color: #b91c1c;
+    font-size: 0.82rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.deleteBtn:hover {
+    background-color: #fef2f2;
+}

@@ -1,7 +1,7 @@
 /* ── Page ─────────────────────────────────────────────────────────── */
 .page {
     min-height: 100vh;
-    background-color: violet;
+    background-color: #f0f2f5;
     font-family: 'Inter', sans-serif;
     display: flex;
     flex-direction: column;
@@ -9,7 +9,7 @@
 
 /* ── Header ──────────────────────────────────────────────────────── */
 .header {
-    background-color: green;
+    background-color: #191970;
     padding: 0 48px;
     height: 64px;
     display: flex;
@@ -73,6 +73,17 @@
 }
 
 /* ── Main ────────────────────────────────────────────────────────── */
+.dangerBtn {
+    border-color: rgba(252, 165, 165, 0.6);
+    color: #fca5a5;
+}
+
+.dangerBtn:hover {
+    background-color: rgba(185, 28, 28, 0.25);
+    border-color: #fca5a5;
+    color: #fee2e2;
+}
+
 .main {
     flex: 1;
     padding: 40px 48px;

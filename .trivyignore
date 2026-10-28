@@ -2,3 +2,11 @@
 # npm n'est pas invoqué en production (CMD = node dist/index.js)
 # La vulnérabilité WebSocket DoS est inaccessible dans ce contexte
 CVE-2026-12151
+
+# auth-service (Spring Boot 3.5) : corrigées uniquement dans Spring Framework 7 (Spring Boot 4)
+# L'API est purement REST (@RestController) : ni XsltView, ni rendu de vue, ni Server-Sent Events
+# À retirer lors du passage à Spring Boot 4
+# XsltView : SSRF / RCE via une vue XSLT non nommée
+CVE-2026-47884
+# SSE avec fragments de vue : corruption du flux
+CVE-2026-47890

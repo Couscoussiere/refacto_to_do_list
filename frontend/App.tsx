@@ -1,20 +1,98 @@
 import React from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Register from './pages/Auth/Register/Register';
 import Login from './pages/Auth/Login/Login';
+import Landing from './pages/Landing/Landing';
 import Home from './pages/Home/Home';
 import ProjectDetail from './pages/ProjectDetail/ProjectDetail';
+import Admin from './pages/Admin/Admin';
+import NotFound from './pages/NotFound/NotFound';
+import ProtectedRoute from './component/ProtectedRoute';
+import PublicOnlyRoute from './component/PublicOnlyRoute';
+import AdminRoute from './component/AdminRoute';
 import SessionExpiredModal from './component/SessionExpiredModal';
 import NotificationToast from './component/NotificationToast';
-import { isAuthenticated } from './service/authService';
-import { type Project } from './service/projectService';
+import { getProject, type Project } from './service/projectService';
 import { UNAUTHORIZED_EVENT } from './utils/fetchWithAuth';
 import { useNotifications } from './hooks/useNotifications';
 
-type Page = 'register' | 'login' | 'home' | 'project';
+type AuthPageState = { from?: string; fromLanding?: boolean } | null;
+
+function LoginPage() {
+    const navigate = useNavigate();
+    const state = useLocation().state as AuthPageState;
+    const from = state?.from ?? '/projects';
+    return (
+        <Login
+            animateIn={state?.fromLanding === true}
+            onGoToRegister={() => navigate('/register')}
+            onSuccess={() => navigate(from, { replace: true })}
+        />
+    );
+}
+
+function RegisterPage() {
+    const navigate = useNavigate();
+    const state = useLocation().state as AuthPageState;
+    return (
+        <Register
+            animateIn={state?.fromLanding === true}
+            onGoToLogin={() => navigate('/login')}
+            onSuccess={() => navigate('/projects', { replace: true })}
+        />
+    );
+}
+
+function HomePage() {
+    const navigate = useNavigate();
+    return (
+        <Home
+            onLogout={() => navigate('/login')}
+            onOpenProject={(p: Project) => navigate(`/projects/${p.id}`, { state: { project: p } })}
+            onOpenAdmin={() => navigate('/admin')}
+        />
+    );
+}
+
+function AdminPage() {
+    const navigate = useNavigate();
+    return <Admin onBack={() => navigate('/projects')} />;
+}
+
+function ProjectDetailPage() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { id } = useParams();
+    const projectId = Number(id);
+    // Le projet est passé par la navigation depuis la liste ; sinon (rechargement,
+    // lien direct) on le récupère auprès de project-service.
+    const fromState = (location.state as { project?: Project } | null)?.project;
+    const [project, setProject] = React.useState<Project | null>(fromState?.id === projectId ? fromState : null);
+    const [notFound, setNotFound] = React.useState(false);
+
+    React.useEffect(() => {
+        if (project) return;
+        if (!Number.isInteger(projectId) || projectId <= 0) {
+            setNotFound(true);
+            return;
+        }
+        getProject(projectId).then(setProject).catch(() => setNotFound(true));
+    }, [projectId, project]);
+
+    if (notFound) return <Navigate to="/projects" replace />;
+    if (!project) return null;
+
+    return (
+        <ProjectDetail
+            project={project}
+            onBack={() => navigate('/projects')}
+            onLogout={() => navigate('/login')}
+        />
+    );
+}
 
 export default function App() {
-    const [page, setPage] = React.useState<Page>(isAuthenticated() ? 'home' : 'register');
-    const [selectedProject, setSelectedProject] = React.useState<Project | null>(null);
+    const navigate = useNavigate();
     const [sessionExpired, setSessionExpired] = React.useState(false);
     const { notifications, dismiss } = useNotifications();
 
@@ -24,36 +102,36 @@ export default function App() {
         return () => window.removeEventListener(UNAUTHORIZED_EVENT, handler);
     }, []);
 
-    const openProject = (project: Project) => {
-        setSelectedProject(project);
-        setPage('project');
-    };
-
     const handleReconnect = () => {
         setSessionExpired(false);
-        setPage('login');
+        navigate('/login');
     };
-
-    let content: React.ReactNode;
-    if (page === 'project' && selectedProject) {
-        content = (
-            <ProjectDetail
-                project={selectedProject}
-                onBack={() => setPage('home')}
-                onLogout={() => setPage('login')}
-            />
-        );
-    } else if (page === 'home') {
-        content = <Home onLogout={() => setPage('login')} onOpenProject={openProject} />;
-    } else if (page === 'login') {
-        content = <Login onGoToRegister={() => setPage('register')} onSuccess={() => setPage('home')} />;
-    } else {
-        content = <Register onGoToLogin={() => setPage('login')} onSuccess={() => setPage('home')} />;
-    }
 
     return (
         <>
-            {content}
+            <Routes>
+                {/* Accessible à tous */}
+                <Route path="/" element={<Landing />} />
+
+                {/* Réservé aux visiteurs non connectés */}
+                <Route element={<PublicOnlyRoute />}>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                </Route>
+
+                {/* Réservé aux utilisateurs connectés */}
+                <Route element={<ProtectedRoute />}>
+                    <Route path="/projects" element={<HomePage />} />
+                    <Route path="/projects/:id" element={<ProjectDetailPage />} />
+
+                    {/* Réservé aux comptes admin */}
+                    <Route element={<AdminRoute />}>
+                        <Route path="/admin" element={<AdminPage />} />
+                    </Route>
+                </Route>
+
+                <Route path="*" element={<NotFound />} />
+            </Routes>
             {sessionExpired && <SessionExpiredModal onReconnect={handleReconnect} />}
             <NotificationToast notifications={notifications} onDismiss={dismiss} />
         </>

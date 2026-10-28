@@ -2,31 +2,23 @@
   "name": "101-app",
   "version": "1.0.0",
   "private": true,
-  "main": "dist/index.js",
   "license": "MIT",
   "workspaces": [
-    "auth-service",
     "project-service",
     "task-service",
     "notification-service"
   ],
   "scripts": {
     "prettify": "prettier -l --write \"**/*.js\"",
-    "build": "tsc",
     "test:e2e": "playwright test",
-    "prestart": "npm run build",
-    "start": "node dist/index.js",
     "lint": "eslint .",
     "lint:architecture": "depcruise . --config .dependency-cruiser.cjs",
     "frontend:dev": "cd frontend && npm run dev",
     "frontend:build": "cd frontend && npm run build"
   },
   "dependencies": {
-    "docx": "^9.7.1",
     "express": "^5.2.1",
-    "mysql2": "^3.17.5",
-    "sharp": "^0.35.2",
-    "wait-port": "^1.1.0"
+    "mysql2": "^3.17.5"
   },
   "resolutions": {
     "ansi-regex": "5.0.1"

@@ -1,0 +1,244 @@
+name: Build & Publish
+
+# Pour chaque micro-service, à chaque commit et tag poussés :
+#   tests unitaires → build de l'image → scan Trivy → publication sur ghcr.io
+# Chaque étape est bloquante : une erreur arrête le job et rien n'est publié.
+on:
+    push:
+        branches:
+            - '**'
+        # Tous les tags : vX.Y.Z publie une release, les autres une image au nom du tag
+        tags:
+            - '**'
+
+permissions:
+    contents: read
+    packages: write
+
+# Un nouveau push sur la même branche annule le pipeline en cours
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    service:
+        name: ${{ matrix.service }}
+        runs-on: ubuntu-24.04
+        outputs:
+            release: ${{ steps.tags.outputs.release }}
+        strategy:
+            # Un service en échec arrête immédiatement les autres
+            fail-fast: true
+            matrix:
+                include:
+                    - service: auth-service
+                      stack: java
+                      context: ./auth-service
+                    - service: project-service
+                      stack: node
+                      context: .
+                    - service: task-service
+                      stack: node
+                      context: .
+                    - service: notification-service
+                      stack: node
+                      context: .
+                    - service: frontend
+                      stack: frontend
+                      context: ./frontend
+
+        steps:
+            - uses: actions/checkout@v4
+
+            # ─── Identifiant unique de l'image ─────────────────────────────────────
+
+            - name: Calculer les tags de l'image
+              id: tags
+              run: |
+                  IMAGE="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')/${{ matrix.service }}"
+                  echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+                  # Identifiant unique : numéro du commit, ou nom du tag
+                  TAGS="$IMAGE:sha-${GITHUB_SHA}"
+                  VERSION=dev
+                  RELEASE=false
+
+                  if [ "$GITHUB_REF_TYPE" = "tag" ] && echo "$GITHUB_REF_NAME" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+                      # Tag de version : vX.Y.Z → X.Y.Z, X.Y et X
+                      RELEASE=true
+                      VERSION="${GITHUB_REF_NAME#v}"
+                      MAJOR=$(echo "$VERSION" | cut -d. -f1)
+                      MINOR=$(echo "$VERSION" | cut -d. -f1,2)
+                      TAGS="$TAGS,$IMAGE:$VERSION,$IMAGE:$MINOR,$IMAGE:$MAJOR"
+                  elif [ "$GITHUB_REF_TYPE" = "tag" ]; then
+                      # Autre tag : son nom, limité aux caractères autorisés par Docker
+                      VERSION=$(echo "$GITHUB_REF_NAME" | sed -E 's/[^A-Za-z0-9_.-]/-/g; s/^[.-]+//' | cut -c1-128)
+                      TAGS="$TAGS,$IMAGE:$VERSION"
+                  elif [ "$GITHUB_REF_NAME" = "dev" ] || [ "$GITHUB_REF_NAME" = "main" ]; then
+                      # Tag glissant utilisé par deploy.yml
+                      TAGS="$TAGS,$IMAGE:$GITHUB_REF_NAME"
+                  fi
+
+                  {
+                      echo "TAGS=$TAGS"
+                      echo "VERSION=$VERSION"
+                      echo "RELEASE=$RELEASE"
+                  } >> "$GITHUB_ENV"
+                  echo "release=$RELEASE" >> "$GITHUB_OUTPUT"
+                  echo "Tags : $TAGS"
+
+            - name: Vérifier que la version du service correspond au tag
+              if: env.RELEASE == 'true'
+              run: |
+                  # auth-service est en Java : sa version est dans pom.xml, pas dans package.json
+                  if [ -f "${{ matrix.service }}/pom.xml" ]; then
+                      SVC_VERSION=$(python3 -c 'import sys, xml.etree.ElementTree as E; print(E.parse(sys.argv[1]).getroot().find("{http://maven.apache.org/POM/4.0.0}version").text)' "${{ matrix.service }}/pom.xml")
+                  else
+                      SVC_VERSION=$(jq -r .version "${{ matrix.service }}/package.json")
+                  fi
+                  if [ "$SVC_VERSION" != "$VERSION" ]; then
+                      echo "MISMATCH: ${{ matrix.service }} est en version $SVC_VERSION mais le tag est v$VERSION"
+                      exit 1
+                  fi
+                  echo "OK: ${{ matrix.service }} = $SVC_VERSION"
+
+            # ─── Tests unitaires ───────────────────────────────────────────────────
+
+            - name: Installer Java
+              if: matrix.stack == 'java'
+              uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: 21
+                  cache: maven
+
+            - name: Tests unitaires (Maven)
+              if: matrix.stack == 'java'
+              working-directory: auth-service
+              run: mvn -B verify
+
+            - name: Installer Node.js
+              if: matrix.stack != 'java'
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: npm
+                  cache-dependency-path: ${{ matrix.stack == 'frontend' && 'frontend/package-lock.json' || 'package-lock.json' }}
+
+            - name: Tests unitaires (Vitest)
+              if: matrix.stack == 'node'
+              run: |
+                  npm ci
+                  cd ${{ matrix.service }}
+                  npm run build
+                  npm run test:coverage
+
+            # Le frontend n'a pas de tests unitaires : on vérifie qu'il compile
+            - name: Build du frontend
+              if: matrix.stack == 'frontend'
+              working-directory: frontend
+              run: |
+                  npm ci
+                  npm run build
+
+            - name: Upload des rapports de tests
+              if: always() && matrix.stack != 'frontend'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: tests-${{ matrix.service }}
+                  path: |
+                      auth-service/target/surefire-reports/
+                      ${{ matrix.service }}/coverage/
+                  if-no-files-found: ignore
+                  retention-days: 7
+
+            # ─── Build, scan et publication de l'image ─────────────────────────────
+
+            - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3
+
+            - name: Build de l'image
+              uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6
+              with:
+                  context: ${{ matrix.context }}
+                  file: ${{ matrix.service }}/Dockerfile
+                  platforms: linux/amd64
+                  load: true
+                  push: false
+                  tags: ${{ env.TAGS }}
+                  build-args: |
+                      VERSION=${{ env.VERSION }}
+                      GIT_SHA=${{ github.sha }}
+                      BUILD_DATE=${{ github.event.head_commit.timestamp }}
+                  cache-from: type=gha,scope=${{ matrix.service }}
+                  cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+            - name: Scan de sécurité Trivy
+              uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8  # v0.36.0
+              with:
+                  image-ref: ${{ env.IMAGE }}:sha-${{ github.sha }}
+                  format: table
+                  exit-code: '1'
+                  severity: HIGH,CRITICAL
+                  trivyignores: .trivyignore
+
+            - name: Login GitHub Container Registry
+              uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9  # v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Publication de l'image
+              run: docker push --all-tags "$IMAGE"
+
+    # ─── Release GitHub (tags vX.Y.Z uniquement, après publication de tous les services) ─
+
+    publish-release:
+        name: Publish GitHub Release
+        needs: service
+        if: needs.service.outputs.release == 'true'
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: write
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Extract version
+              run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+            - name: Set image name
+              run: echo "IMAGE_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+            - name: Generate compatibility manifest
+              run: |
+                  cat > compatibility.json << EOF
+                  {
+                    "stack": "${{ env.VERSION }}",
+                    "api": "v1",
+                    "releasedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+                    "services": {
+                      "auth-service":          "${{ env.VERSION }}",
+                      "project-service":       "${{ env.VERSION }}",
+                      "task-service":          "${{ env.VERSION }}",
+                      "notification-service":  "${{ env.VERSION }}",
+                      "frontend":              "${{ env.VERSION }}"
+                    },
+                    "images": {
+                      "auth-service":          "ghcr.io/${{ env.IMAGE_NAME }}/auth-service:${{ env.VERSION }}",
+                      "project-service":       "ghcr.io/${{ env.IMAGE_NAME }}/project-service:${{ env.VERSION }}",
+                      "task-service":          "ghcr.io/${{ env.IMAGE_NAME }}/task-service:${{ env.VERSION }}",
+                      "notification-service":  "ghcr.io/${{ env.IMAGE_NAME }}/notification-service:${{ env.VERSION }}",
+                      "frontend":              "ghcr.io/${{ env.IMAGE_NAME }}/frontend:${{ env.VERSION }}"
+                    }
+                  }
+                  EOF
+
+            - name: Create GitHub Release
+              run: |
+                  gh release create "${{ github.ref_name }}" \
+                    --title "Release ${{ github.ref_name }}" \
+                    --generate-notes \
+                    compatibility.json
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

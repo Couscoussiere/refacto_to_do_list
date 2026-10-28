@@ -7,9 +7,10 @@ export default defineConfig({
     server: {
         port: 5173,
         proxy: {
-            '/auth': 'http://localhost:3000',
-            '/projects': 'http://localhost:3001',
-            '/tasks': 'http://localhost:3002',
+            '/v1/auth': 'http://localhost:3000',
+            '/v1/projects': 'http://localhost:3001',
+            '/v1/tasks': 'http://localhost:3002',
+            '/v1/notifications': { target: 'http://localhost:3003', ws: true },
         },
     },
     build: {

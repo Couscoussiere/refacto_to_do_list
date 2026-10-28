@@ -3,10 +3,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Page Login', () => {
 
-    // L'app démarre sur Register par défaut → on navigue vers Login
     test.beforeEach(async ({ page }) => {
-        await page.goto('/');
-        await page.getByText('Se connecter').click();
+        await page.goto('/login');
         await expect(page.getByRole('heading', { name: 'Se connecter' })).toBeVisible();
     });
 

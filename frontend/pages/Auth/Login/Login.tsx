@@ -11,9 +11,11 @@ const FEATURES = [
 interface Props {
     onGoToRegister: () => void;
     onSuccess: () => void;
+    // Joue l'animation d'entrée (arrivée depuis la page principale)
+    animateIn?: boolean;
 }
 
-export default function Login({ onGoToRegister, onSuccess }: Props) {
+export default function Login({ onGoToRegister, onSuccess, animateIn = false }: Props) {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [error, setError] = React.useState<string | null>(null);
@@ -37,7 +39,7 @@ export default function Login({ onGoToRegister, onSuccess }: Props) {
     };
 
     return (
-        <div className={style.page}>
+        <div className={animateIn ? `${style.page} ${style.enter}` : style.page}>
 
             {/* ── Panneau gauche ── */}
             <div className={style.left}>

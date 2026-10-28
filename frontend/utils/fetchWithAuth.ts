@@ -1,9 +1,10 @@
 import { getToken } from '../service/authService';
+import { safeFetch } from './http';
 
 export const UNAUTHORIZED_EVENT = 'app:unauthorized';
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
         ...options,
         headers: {
             'Content-Type': 'application/json',

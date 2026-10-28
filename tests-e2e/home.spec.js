@@ -13,7 +13,7 @@ test.describe('Page Home', () => {
 
     test.beforeEach(async ({ page }) => {
         // Mocker l'API projets avant le chargement de la page
-        await page.route('http://localhost:8080/projects/**', route =>
+        await page.route('**/v1/projects/**', route =>
             route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ projects: FAKE_PROJECTS }) })
         );
 
@@ -23,7 +23,7 @@ test.describe('Page Home', () => {
             localStorage.setItem('user', JSON.stringify(user));
             localStorage.setItem('token', token);
         }, { user: FAKE_USER, token: FAKE_TOKEN });
-        await page.reload();
+        await page.goto('/projects');
 
         await expect(page.getByRole('heading', { name: 'Mes projets' })).toBeVisible();
     });

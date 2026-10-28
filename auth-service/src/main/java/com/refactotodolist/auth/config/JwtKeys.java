@@ -1,0 +1,75 @@
+package com.refactotodolist.auth.config;
+
+import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import jakarta.annotation.PostConstruct;
+
+// Les clés PEM sont stockées en base64 sur une seule ligne dans le .env
+@Component
+public class JwtKeys {
+
+    public static final String JWT_ALGORITHM = "RS256";
+
+    private final String privateKeyEnv;
+    private final String publicKeyEnv;
+
+    public JwtKeys(@Value("${app.jwt.private-key}") String privateKeyEnv,
+                   @Value("${app.jwt.public-key}") String publicKeyEnv) {
+        this.privateKeyEnv = privateKeyEnv;
+        this.publicKeyEnv = publicKeyEnv;
+    }
+
+    // Échoue au démarrage si une clé est absente ou invalide (ex : valeur coupée sur plusieurs lignes dans le .env),
+    // plutôt qu'à la première connexion
+    @PostConstruct
+    void validate() {
+        getPrivateKey();
+        getPublicKey();
+    }
+
+    public RSAPrivateKey getPrivateKey() {
+        String value = requirePresent("JWT_PRIVATE_KEY", privateKeyEnv);
+        try {
+            byte[] der = pemToDer(decodeBase64Pem(value));
+            return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(der));
+        } catch (Exception e) {
+            throw new IllegalStateException("JWT_PRIVATE_KEY is invalid", e);
+        }
+    }
+
+    public RSAPublicKey getPublicKey() {
+        String value = requirePresent("JWT_PUBLIC_KEY", publicKeyEnv);
+        try {
+            byte[] der = pemToDer(decodeBase64Pem(value));
+            return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(der));
+        } catch (Exception e) {
+            throw new IllegalStateException("JWT_PUBLIC_KEY is invalid", e);
+        }
+    }
+
+    private static String requirePresent(String name, String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException(name + " is missing in environment");
+        }
+        return value;
+    }
+
+    // Toute erreur de décodage (base64, PEM, clé) est remontée comme "invalid" par l'appelant
+    private static String decodeBase64Pem(String value) {
+        return new String(Base64.getMimeDecoder().decode(value.trim()), StandardCharsets.UTF_8);
+    }
+
+    private static byte[] pemToDer(String pem) {
+        String body = pem.replaceAll("-----(BEGIN|END) [A-Z ]+-----", "").replaceAll("\\s", "");
+        return Base64.getDecoder().decode(body);
+    }
+}
