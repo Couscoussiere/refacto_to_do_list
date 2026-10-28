@@ -1,8 +1,8 @@
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
-RUN apk add --no-cache python3 make g++
-RUN apk update && apk upgrade --no-cache
-RUN npm install -g npm@11 && npm cache clean --force
+RUN apk upgrade --no-cache && \
+    apk add --no-cache python3 make g++ && \
+    npm install -g npm@11 && npm cache clean --force
 
 WORKDIR /app
 
@@ -18,9 +18,20 @@ COPY notification-service/tsconfig.json ./notification-service/
 COPY notification-service/src ./notification-service/src
 
 WORKDIR /app/notification-service
-RUN npm run build
+RUN npm run build && \
+    npm prune --omit=dev --prefix /app
 
-FROM node:20-alpine AS runtime
+FROM node:24-alpine AS runtime
+
+RUN apk upgrade --no-cache && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/notification-service/package.json ./notification-service/
+COPY --from=builder /app/notification-service/dist ./notification-service/dist
 
 ARG VERSION=dev
 ARG GIT_SHA=unknown
@@ -35,18 +46,12 @@ LABEL org.opencontainers.image.title="notification-service" \
       org.opencontainers.image.licenses="MIT" \
       com.refactotodolist.provides.events-version="v1"
 
-RUN apk update && apk upgrade --no-cache && \
-    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
-
-WORKDIR /app
-
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/notification-service/package.json ./notification-service/
-COPY --from=builder /app/notification-service/dist ./notification-service/dist
-
 WORKDIR /app/notification-service
+
 ENV NODE_ENV=production
+
 EXPOSE 3003
+
 USER node
+
 CMD ["node", "dist/index.js"]

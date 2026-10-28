@@ -31,10 +31,12 @@ L'application est accessible sur **http://localhost:8080** (reverse-proxy nginx)
 
 Les backends, les bases MySQL et RabbitMQ sont sur un réseau Docker interne (`backend`, `internal: true`) et ne publient aucun port : ils ne sont pas joignables depuis l'extérieur.
 
-Pour le développement local (frontend en `npm run frontend:dev`, Swagger, curl…), la surcharge `docker-compose.debug.yml` ré-expose les backends sur `127.0.0.1:3000-3003` :
+Par défaut, la stack démarre en environnement **TEST** (images reconstruites, Swagger activé). Les réglages propres à chaque environnement (port, tag d'image, limites CPU / mémoire…) sont dans `environments/` ; les secrets restent dans `.env` :
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.debug.yml up --build
+# UAT (port 8081) et PROD (port 80) : images publiées par la CI, sans reconstruction
+docker compose --env-file .env --env-file environments/uat.env up -d --no-build
+docker compose --env-file .env --env-file environments/prod.env up -d --no-build
 ```
 
 Pour disposer d'un compte **admin**, renseigner `ADMIN_EMAIL` et `ADMIN_PASSWORD` dans le `.env` racine : l'auth-service crée ce compte au démarrage (ou promeut le compte existant avec cet email). Les comptes créés via l'inscription sont `standard`.

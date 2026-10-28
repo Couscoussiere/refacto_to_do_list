@@ -1,7 +1,7 @@
 version: 2
 
 updates:
-  # ─── Dépendances racine ──────────────────────────────────────────────────────
+  # ─── Dépendances racine + workspaces (project, task, notification) ──────────────────────────────────────────────────────
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -21,39 +21,6 @@ updates:
     labels:
       - dependencies
       - auth-service
-
-  # ─── Project service ─────────────────────────────────────────────────────────
-  - package-ecosystem: npm
-    directory: /project-service
-    schedule:
-      interval: weekly
-      day: monday
-      time: '09:00'
-    labels:
-      - dependencies
-      - project-service
-
-  # ─── Task service ────────────────────────────────────────────────────────────
-  - package-ecosystem: npm
-    directory: /task-service
-    schedule:
-      interval: weekly
-      day: monday
-      time: '09:00'
-    labels:
-      - dependencies
-      - task-service
-
-  # ─── Notification service ────────────────────────────────────────────────────
-  - package-ecosystem: npm
-    directory: /notification-service
-    schedule:
-      interval: weekly
-      day: monday
-      time: '09:00'
-    labels:
-      - dependencies
-      - notification-service
 
   # ─── Frontend ────────────────────────────────────────────────────────────────
   - package-ecosystem: npm

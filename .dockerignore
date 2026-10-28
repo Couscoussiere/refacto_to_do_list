@@ -1,3 +1,24 @@
-node_modules
-Dockerfile
-auth-service/target
+# Contexte de build commun à project-service, task-service et notification-service
+**/node_modules
+**/dist
+**/coverage
+**/*.tsbuildinfo
+**/Dockerfile
+**/tests
+
+# Secrets et fichiers locaux
+.env
+.env.*
+*.pem
+.git
+.github
+.idea
+.claude
+
+# Hors périmètre des images backend Node
+auth-service
+frontend
+tests-e2e
+test-results
+playwright-report
+environments

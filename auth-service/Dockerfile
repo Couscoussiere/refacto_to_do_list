@@ -11,6 +11,13 @@ RUN mvn -B -q package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
+RUN apk upgrade --no-cache && \
+    addgroup -S app && adduser -S app -G app
+
+WORKDIR /app
+
+COPY --from=builder /app/target/auth-service.jar ./auth-service.jar
+
 ARG VERSION=dev
 ARG GIT_SHA=unknown
 ARG BUILD_DATE=unknown
@@ -24,14 +31,10 @@ LABEL org.opencontainers.image.title="auth-service" \
       org.opencontainers.image.licenses="MIT" \
       com.refactotodolist.provides.api-version="v1"
 
-RUN apk update && apk upgrade --no-cache && \
-    addgroup -S app && adduser -S app -G app
-
-WORKDIR /app
-
-COPY --from=builder /app/target/auth-service.jar ./auth-service.jar
-
 ENV DOCS_ENABLED=false
+
 EXPOSE 3000
+
 USER app
+
 CMD ["java", "-jar", "auth-service.jar"]
