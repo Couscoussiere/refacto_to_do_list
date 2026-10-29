@@ -45,9 +45,11 @@ x-node-limits: &node-limits
 services:
     rabbitmq:
         <<: *common
-        image: rabbitmq:3-management
+        image: rabbitmq:4.3.7-management
         healthcheck:
-            test: ['CMD', 'rabbitmq-diagnostics', 'check_port_connectivity']
+            # Test du port AMQP en bash : rabbitmq-diagnostics, lancé en root, peut créer
+            # le cookie Erlang avant le serveur et l'empêcher de démarrer
+            test: ['CMD', 'bash', '-c', '</dev/tcp/127.0.0.1/5672']
             interval: 10s
             timeout: 5s
             retries: 15
@@ -108,8 +110,7 @@ services:
 
     mysql-auth:
         <<: *common
-        image: mysql:8.0
-        command: --default-authentication-plugin=mysql_native_password
+        image: mysql:8.4.13
         environment:
             - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD?MYSQL_ROOT_PASSWORD manquant dans .env}
             - MYSQL_DATABASE=authdb
@@ -124,8 +125,7 @@ services:
 
     mysql-project:
         <<: *common
-        image: mysql:8.0
-        command: --default-authentication-plugin=mysql_native_password
+        image: mysql:8.4.13
         environment:
             - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD?MYSQL_ROOT_PASSWORD manquant dans .env}
             - MYSQL_DATABASE=projectdb
@@ -140,8 +140,7 @@ services:
 
     mysql-task:
         <<: *common
-        image: mysql:8.0
-        command: --default-authentication-plugin=mysql_native_password
+        image: mysql:8.4.13
         environment:
             - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD?MYSQL_ROOT_PASSWORD manquant dans .env}
             - MYSQL_DATABASE=taskdb
