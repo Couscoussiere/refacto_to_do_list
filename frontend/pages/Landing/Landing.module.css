@@ -60,6 +60,56 @@
     background-color: #ffffff;
 }
 
+/* ── Utilisateur connecté ────────────────────────────────────────── */
+.userChip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px 6px 6px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(236, 239, 241, 0.2);
+    background-color: rgba(236, 239, 241, 0.06);
+    text-decoration: none;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.userChip:hover {
+    background-color: rgba(236, 239, 241, 0.12);
+    border-color: rgba(236, 239, 241, 0.4);
+}
+
+.avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: rgba(236, 239, 241, 0.15);
+    border: 1.5px solid rgba(236, 239, 241, 0.3);
+    color: #ECEFF1;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.userText {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.userLabel {
+    font-size: 0.7rem;
+    color: rgba(236, 239, 241, 0.55);
+}
+
+.userName {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #ECEFF1;
+}
+
 /* ── Hero ────────────────────────────────────────────────────────── */
 .hero {
     flex: 1;
