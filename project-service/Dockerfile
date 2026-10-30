@@ -9,6 +9,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY project-service/package.json ./project-service/
 COPY task-service/package.json ./task-service/
+
 COPY notification-service/package.json ./notification-service/
 
 RUN npm ci
