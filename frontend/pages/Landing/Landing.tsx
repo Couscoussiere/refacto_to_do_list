@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import style from './Landing.module.css';
-import { isAuthenticated } from '../../service/authService';
+import { isAuthenticated, getUser } from '../../service/authService';
 
 const FEATURES = [
     { icon: '✓', title: 'Projets', label: 'Regroupez vos tâches par projet, avec budget et échéances.' },
@@ -14,6 +14,9 @@ const LEAVE_DURATION_MS = 350;
 
 export default function Landing() {
     const loggedIn = isAuthenticated();
+    const user = getUser();
+    const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : '?';
+    const fullName = user ? `${user.firstName} ${user.lastName}` : 'Utilisateur';
     const navigate = useNavigate();
     const [leaving, setLeaving] = React.useState(false);
 
@@ -39,7 +42,13 @@ export default function Landing() {
                 <span className={style.brand}>TRAVAIL</span>
                 <nav className={style.nav}>
                     {loggedIn ? (
-                        <Link className={style.primaryBtn} to="/projects">Mes projets</Link>
+                        <Link className={style.userChip} to="/projects" title="Accéder à mes projets">
+                            <span className={style.avatar}>{initials}</span>
+                            <span className={style.userText}>
+                                <span className={style.userLabel}>Connecté en tant que</span>
+                                <span className={style.userName}>{fullName}</span>
+                            </span>
+                        </Link>
                     ) : (
                         <>
                             <Link className={style.ghostBtn} to="/login" onClick={goToAuth('/login')}>Se connecter</Link>
