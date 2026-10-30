@@ -14,7 +14,7 @@ jobs:
     outputs:
       has_changes: ${{ steps.check.outputs.has_changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -47,9 +47,9 @@ jobs:
           - service: notification-service
             path: notification-service
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -65,7 +65,7 @@ jobs:
 
       - name: Upload rapport coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-coverage-${{ matrix.service }}
           path: ${{ matrix.path }}/coverage/
@@ -77,9 +77,9 @@ jobs:
     if: needs.check-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
@@ -91,7 +91,7 @@ jobs:
 
       - name: Upload rapports de tests
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-surefire-auth-service
           path: auth-service/target/surefire-reports/
@@ -105,7 +105,7 @@ jobs:
     if: needs.check-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Démarrage de la stack Docker Compose
         run: docker compose up -d --build
@@ -116,7 +116,7 @@ jobs:
           sleep 30
           docker compose ps
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -131,7 +131,7 @@ jobs:
 
       - name: Upload rapport Playwright
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/
@@ -159,7 +159,7 @@ jobs:
           - notification-service
           - frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build image ${{ matrix.service }}
         run: docker build -t ${{ matrix.service }}:scan ./${{ matrix.service }}
@@ -188,7 +188,7 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Initialisation CodeQL
         uses: github/codeql-action/init@c35d1b164463ee62a100735382aaaa525c5d3496  # v4
